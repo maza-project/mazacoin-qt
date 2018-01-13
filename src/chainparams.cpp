@@ -172,14 +172,7 @@ public:
 
         // Note that of those with the service bits flag, most only support a
         // subset of possible options.
-        // Bitcoin ABC seeder
-        vSeeds.push_back(
-            CDNSSeedData("mazacoin.org", "node.mazacoin.org", true));
-        // bitcoinforks seeders
-        // BU backed seeder
-        // Bitprim
-        // Amaury SÉCHET
-        // criptolayer.net
+        vSeeds.push_back(CDNSSeedData("mazacoin.org", "node.mazacoin.org", true));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 50);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 9);
@@ -188,8 +181,7 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
         cashaddrPrefix = "bitcoincash";
 
-        vFixedSeeds = std::vector<SeedSpec6>(
-            pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
+        // vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
 
         fMiningRequiresPeers = true;
         fDefaultConsistencyChecks = false;
