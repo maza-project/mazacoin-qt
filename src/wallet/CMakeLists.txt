@@ -13,6 +13,6 @@ add_library(wallet
 )
 
 # Add Berkeley DB dependency
-find_package(BerkeleyDB REQUIRED)
+#find_package(BerkeleyDB REQUIRED)
 target_include_directories(wallet PRIVATE ${BDB_INCLUDE_DIR})
 target_link_libraries(wallet util univalue ${BDBXX_LIBRARY} ${BDB_LIBRARY})

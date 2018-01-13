@@ -1481,6 +1481,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
         if (!pfrom->fInbound) {
             connman.SetServices(pfrom->addr, nServices);
         }
+        /*
         if (pfrom->nServicesExpected & ~nServices) {
             LogPrint(BCLog::NET, "peer=%d does not offer the expected services "
                                  "(%08x offered, %08x expected); "
@@ -1495,6 +1496,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
             pfrom->fDisconnect = true;
             return false;
         }
+         */
 
         if (nVersion < MIN_PEER_PROTO_VERSION) {
             // disconnect from peers older than this proto version

@@ -91,7 +91,7 @@ if(SECP256K1_BUILD_TEST)
 
 	function(create_secp256k1_test NAME FILES)
 		add_executable(${NAME} ${FILES})
-		target_link_libraries(${NAME} secp256k1)
+		target_link_libraries(${NAME} secp256k1 ${OPENSSL_LIBRARIES})
 		add_test(NAME ${NAME} COMMAND ${NAME})
 		target_compile_definitions(${NAME} PRIVATE HAVE_CONFIG_H)
 	endfunction()

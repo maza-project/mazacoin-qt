@@ -1175,7 +1175,7 @@ Amount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams) {
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64) return Amount(0);
 
-    Amount nSubsidy = 50 * COIN;
+    Amount nSubsidy = 5000 * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur
     // approximately every 4 years.
     return Amount(nSubsidy.GetSatoshis() >> halvings);
@@ -3365,7 +3365,7 @@ static bool ContextualCheckBlockHeader(const Config &config,
     const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
 
     // Check proof of work
-    if (block.nBits != GetNextWorkRequired(pindexPrev, &block, config)) {
+    if (block.nBits != GetNextCashWorkRequired(pindexPrev, &block, config)) {
         LogPrintf("bad bits after height: %d\n", pindexPrev->nHeight);
         return state.DoS(100, false, REJECT_INVALID, "bad-diffbits", false,
                          "incorrect proof of work");

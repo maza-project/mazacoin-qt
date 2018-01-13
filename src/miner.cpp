@@ -74,7 +74,7 @@ int64_t UpdateTime(CBlockHeader *pblock, const Config &config,
 
     // Updating time can change work required on testnet:
     if (consensusParams.fPowAllowMinDifficultyBlocks) {
-        pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, config);
+        pblock->nBits = GetNextCashWorkRequired(pindexPrev, pblock, config);
     }
 
     return nNewTime - nOldTime;
@@ -211,7 +211,7 @@ BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn) {
     // Fill in header.
     pblock->hashPrevBlock = pindexPrev->GetBlockHash();
     UpdateTime(pblock, *config, pindexPrev);
-    pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, *config);
+    pblock->nBits = GetNextCashWorkRequired(pindexPrev, pblock, *config);
     pblock->nNonce = 0;
     pblocktemplate->vTxSigOpsCount[0] =
         GetSigOpCountWithoutP2SH(*pblock->vtx[0]);

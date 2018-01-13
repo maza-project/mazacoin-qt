@@ -2,11 +2,26 @@
 
 set(CMAKE_CXX_STANDARD 11)
 
+
+set(OPENSSL_VER "1.0.2l")
+set(OPENSSL_ROOT_DIR "/usr/local/Cellar/openssl/${OPENSSL_VER}/")
+set(BDB_VER "4.8.30")
+set(BDB_ROOT_DIR "/usr/local/Cellar/berkeley-db4/${BDB_VER}/")
+set(BDB_INCLUDE_DIR ${BDB_ROOT_DIR}/include)
+set(BDBXX_LIBRARY ${BDB_ROOT_DIR}/lib/libdb_cxx.a)
+set(BDB_LIBRARY ${BDB_ROOT_DIR}/lib/libdb.a)
+
+add_definitions("-DHAVE_CONFIG_H")
+
+
 option(BUILD_BITCOIN_WALLET "Activate the wallet functionality" ON)
-option(BUILD_BITCOIN_ZMQ "Activate the ZeroMQ functionalities" ON)
+option(BUILD_BITCOIN_ZMQ "Activate the ZeroMQ functionalities" OFF)
 option(BUILD_BITCOIN_SEEDER "Build bitcoin-seeder" ON)
 option(BUILD_BITCOIN_CLI "Build bitcoin-cli" ON)
 option(BUILD_BITCOIN_TX "Build bitcoin-tx" ON)
+
+find_package(OpenSSL)
+
 
 # Ensure that WINDRES_PREPROC is enabled when using windres.
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -34,6 +49,14 @@ else()
 	add_compiler_flag(-Wno-unused-parameter)
 endif()
 
+
+include_directories(
+  ${include_directories}
+  ${BDB_ROOT_DIR}/include
+  ${OPENSSL_INCLUDE_DIR}
+  )
+
+
 # libtool style configure
 add_subdirectory(config)
 
@@ -50,6 +73,9 @@ add_subdirectory(univalue)
 # TODO: Improve the structure once cmake is rocking.
 
 # Various completely unrelated features shared by all executables.
+
+
+
 add_library(util
 	chainparamsbase.cpp
 	clientversion.cpp
@@ -243,9 +269,11 @@ if(BUILD_BITCOIN_TX)
 	target_link_libraries(bitcoin-tx bitcoinconsensus)
 endif()
 
+link_directories ( ${Boost_LIBRARY_DIRS} )
+
 # bitcoind
 add_executable(bitcoind bitcoind.cpp)
-target_link_libraries(bitcoind server)
+target_link_libraries(bitcoind server miniupnpc)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	target_sources(bitcoind PRIVATE bitcoind-res.rc)
 endif()
@@ -261,3 +289,6 @@ if(BUILD_BITCOIN_ZMQ)
 	add_subdirectory(zmq)
 	target_link_libraries(bitcoind zmq)
 endif()
+
+
+add_subdirectory(qt)
