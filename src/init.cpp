@@ -1518,10 +1518,10 @@ bool AppInitParameterInteraction(Config &config) {
     // Signal Bitcoin Cash support.
     // TODO: remove some time after the hardfork when no longer needed
     // to differentiate the network nodes.
-    nLocalServices = ServiceFlags(nLocalServices | NODE_BITCOIN_CASH);
+    nLocalServices = ServiceFlags(nLocalServices);
 
     // Preferentially keep peers which service NODE_BITCOIN_CASH
-    nRelevantServices = ServiceFlags(nRelevantServices | NODE_BITCOIN_CASH);
+    nRelevantServices = ServiceFlags(nRelevantServices);
 
     nMaxTipAge = GetArg("-maxtipage", DEFAULT_MAX_TIP_AGE);
 

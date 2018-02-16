@@ -485,7 +485,7 @@ static void MutateTxDelOutput(CMutableTransaction &tx,
     tx.vout.erase(tx.vout.begin() + outIdx);
 }
 
-static const unsigned int N_SIGHASH_OPTS = 12;
+static const unsigned int N_SIGHASH_OPTS = 6;
 static const struct {
     const char *flagStr;
     int flags;
@@ -496,15 +496,6 @@ static const struct {
     {"ALL|ANYONECANPAY", SIGHASH_ALL | SIGHASH_ANYONECANPAY},
     {"NONE|ANYONECANPAY", SIGHASH_NONE | SIGHASH_ANYONECANPAY},
     {"SINGLE|ANYONECANPAY", SIGHASH_SINGLE | SIGHASH_ANYONECANPAY},
-    {"ALL|FORKID", SIGHASH_ALL | SIGHASH_FORKID},
-    {"NONE|FORKID", SIGHASH_NONE | SIGHASH_FORKID},
-    {"SINGLE|FORKID", SIGHASH_SINGLE | SIGHASH_FORKID},
-    {"ALL|FORKID|ANYONECANPAY",
-     SIGHASH_ALL | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
-    {"NONE|FORKID|ANYONECANPAY",
-     SIGHASH_NONE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
-    {"SINGLE|FORKID|ANYONECANPAY",
-     SIGHASH_SINGLE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
 };
 
 static bool findSighashFlags(int &flags, const std::string &flagStr) {

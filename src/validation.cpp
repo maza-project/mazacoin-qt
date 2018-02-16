@@ -50,7 +50,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-#error "Bitcoin cannot be compiled without assertions."
+#error "Maza cannot be compiled without assertions."
 #endif
 
 /**
@@ -90,7 +90,7 @@ static void CheckBlockIndex(const Consensus::Params &consensusParams);
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
 
-const std::string strMessageMagic = "Bitcoin Signed Message:\n";
+const std::string strMessageMagic = "Maza Signed Message:\n";
 
 // Internal stuff
 namespace {
@@ -1091,7 +1091,7 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams) {
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64) return 0;
 
-    CAmount nSubsidy = 50 * COIN;
+    CAmount nSubsidy = 5000 * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur
     // approximately every 4 years.
     nSubsidy >>= halvings;
@@ -1652,7 +1652,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos,
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("bitcoin-scriptch");
+    RenameThread("maza-scriptch");
     scriptcheckqueue.Thread();
 }
 
