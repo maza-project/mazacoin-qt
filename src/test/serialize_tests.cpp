@@ -5,7 +5,7 @@
 #include "serialize.h"
 #include "hash.h"
 #include "streams.h"
-#include "test/test_bitcoin.h"
+#include "test/test_maza.h"
 
 #include <cstdint>
 #include <limits>

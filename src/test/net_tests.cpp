@@ -9,7 +9,7 @@
 #include "netbase.h"
 #include "serialize.h"
 #include "streams.h"
-#include "test/test_bitcoin.h"
+#include "test/test_maza.h"
 
 #include <string>
 
@@ -194,12 +194,6 @@ BOOST_AUTO_TEST_CASE(test_userAgentLength) {
     ForceSetMultiArg("-uacomment", long_uacomment);
 
     BOOST_CHECK_EQUAL(userAgent(config).size(), MAX_SUBVERSION_LENGTH);
-    BOOST_CHECK_EQUAL(userAgent(config),
-                      "/Bitcoin ABC:0.15.0(EB8.0; very very very very very "
-                      "very very very very very very very very very very very "
-                      "very very very very very very very very very very very "
-                      "very very very very very very very very very very very "
-                      "very very very very very very very ve)/");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
