@@ -1,10 +1,7 @@
-Contributing to Bitcoin ABC
+Contributing to Maza
 ===========================
 
-The Bitcoin ABC project welcomes contributors!
-
-To contribute, sign up at: https://reviews.bitcoinabc.org/
-
+The Maza project welcomes contributors!
 
 Copyright
 ---------

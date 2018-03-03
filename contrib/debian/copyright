@@ -1,11 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: Bitcoin ABC
+Upstream-Name: Maza
 Upstream-Contact: Satoshi Nakamoto <satoshin@gmx.com>
- irc://#bitcoinabc@freenode.net
-Source: https://github.com/Bitcoin-ABC/bitcoin-abc
+ irc://#maza@freenode.net
+Source: https://github.com/Maza/maza
 
 Files: *
-Copyright: 2009-2017, Bitcoin Core Developers, 2017 Bitcoin Developers
+Copyright: 2009-2018, Maza Core Developers, 2018 Bitcoin Developers
 License: Expat
 Comment: The Bitcoin Developers encompasses those contributing to Bitcoin
          client open source development (various clients).
@@ -82,9 +82,9 @@ License: Expat
 Comment: Modifications of Stephan Hutchings Typicons
 
 Files: src/qt/res/icons/about.png
-       src/qt/res/icons/bitcoin.*
-       share/pixmaps/bitcoin*
-       src/qt/res/src/bitcoin.svg
+       src/qt/res/icons/maza.*
+       share/pixmaps/maza*
+       src/qt/res/src/maza.svg
 Copyright: Bitboy, Jonas Schnelli
 License: public-domain
 Comment: Site: https://bitcointalk.org/?topic=1756.0

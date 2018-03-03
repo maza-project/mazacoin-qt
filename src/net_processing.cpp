@@ -35,7 +35,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-#error "Bitcoin cannot be compiled without assertions."
+#error "Maza cannot be compiled without assertions."
 #endif
 
 // Used only to inform the wallet of when we last received a block.
@@ -1475,6 +1475,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
         if (!pfrom->fInbound) {
             connman.SetServices(pfrom->addr, nServices);
         }
+        /*
         if (pfrom->nServicesExpected & ~nServices) {
             LogPrint("net", "peer=%d does not offer the expected services "
                             "(%08x offered, %08x expected); disconnecting\n",
@@ -1488,6 +1489,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
             pfrom->fDisconnect = true;
             return false;
         }
+         */
 
         if (nVersion < MIN_PEER_PROTO_VERSION) {
             // disconnect from peers older than this proto version
@@ -2152,7 +2154,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
                             // Do not use rejection cache for witness
                             // transactions or witness-stripped transactions, as
                             // they can have been malleated. See
-                            // https://github.com/bitcoin/bitcoin/issues/8279
+                            // https://github.com/maza/maza/issues/8279
                             // for details.
                             assert(recentRejects);
                             recentRejects->insert(orphanId);
@@ -2209,7 +2211,7 @@ static bool ProcessMessage(const Config &config, CNode *pfrom,
             if (!state.CorruptionPossible()) {
                 // Do not use rejection cache for witness transactions or
                 // witness-stripped transactions, as they can have been
-                // malleated. See https://github.com/bitcoin/bitcoin/issues/8279
+                // malleated. See https://github.com/maza/maza/issues/8279
                 // for details.
                 assert(recentRejects);
                 recentRejects->insert(tx.GetId());

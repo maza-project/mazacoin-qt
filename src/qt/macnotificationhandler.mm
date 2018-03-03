@@ -13,7 +13,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"org.bitcoinabc.BitcoinABC-Qt";
+        return @"org.maza.Maza-Qt";
     } else {
         return [self __bundleIdentifier];
     }
