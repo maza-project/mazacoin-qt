@@ -226,14 +226,14 @@
     </message>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>maza-core</name>
     <message>
         <source>Maza Core</source>
         <translation>Maza Core</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>bitcoin-core</translation>
+        <translation>maza-core</translation>
     </message>
     <message>
         <source>Information</source>

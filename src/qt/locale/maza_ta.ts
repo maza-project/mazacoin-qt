@@ -706,7 +706,7 @@
     <name>WalletView</name>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>maza-core</name>
     <message>
         <source>Maza Core</source>
         <translation>Maza மையம்</translation>

@@ -1348,7 +1348,7 @@
     <name>WalletView</name>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>maza-core</name>
     <message>
         <source>Options:</source>
         <translation>Opciók
@@ -1533,7 +1533,7 @@
     </message>
     <message>
         <source>Insufficient funds</source>
-        <translation>Nincs elég bitcoinod.</translation>
+        <translation>Nincs elég mazaod.</translation>
     </message>
     <message>
         <source>Loading block index...</source>

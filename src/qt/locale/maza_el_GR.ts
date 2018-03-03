@@ -163,7 +163,7 @@
     </message>
     <message>
         <source>Send coins to a Maza address</source>
-        <translation>Στείλε νομίσματα σε μια διεύθυνση bitcoin</translation>
+        <translation>Στείλε νομίσματα σε μια διεύθυνση maza</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -1417,7 +1417,7 @@
     <name>WalletView</name>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>maza-core</name>
     <message>
         <source>Options:</source>
         <translation>Επιλογές:</translation>

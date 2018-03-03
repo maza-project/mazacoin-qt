@@ -143,7 +143,7 @@
     </message>
     <message>
         <source>Send coins to a Maza address</source>
-        <translation>Enviar monedas a una dirección bitcoin</translation>
+        <translation>Enviar monedas a una dirección maza</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -750,7 +750,7 @@
     <name>WalletView</name>
     </context>
 <context>
-    <name>bitcoin-core</name>
+    <name>maza-core</name>
     <message>
         <source>Options:</source>
         <translation>Opciones:
@@ -773,7 +773,7 @@
     </message>
     <message>
         <source>Maza Core</source>
-        <translation>bitcoin core</translation>
+        <translation>maza core</translation>
     </message>
     <message>
         <source>Error loading block database</source>
