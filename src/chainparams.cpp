@@ -94,13 +94,8 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 950000;
-        consensus.BIP34Height = DISABLE_HEIGHT;
-        consensus.BIP34Hash = uint256S("0x000000000000024b89b42a942fe0d9fea3bb4"
-                                       "4ab7bd1b19115dd6a759c0808b8");
-        // 000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0
         consensus.BIP65Height = DISABLE_HEIGHT;
-        // 00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931
-        consensus.BIP66Height = DISABLE_HEIGHT;
+        consensus.BIP66Height = 0;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
         consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
@@ -193,16 +188,15 @@ public:
                 {870000, uint256S("00000000000004386593649e6ad9a2ed3153710d94a55bf8dfa630baf53ec5ec")}}};
         
         // Data as of block
-        // 00000000000000000166d612d5595e2b1cd88d71d695fc580af64d8da8658c23
-        // (height 446482).
+        // (height =468990).
         chainTxData = ChainTxData{
             // UNIX timestamp of last known number of transactions.
-            1483472411,
+            1451416800,
             // Total number of transactions between genesis and that timestamp
             // (the tx=... number in the SetBestChain debug.log lines)
-            184495391,
+            1138459,
             // Estimated number of transactions per second after that timestamp.
-            3.2};
+            0.02};
     }
 };
 static CMainParams mainParams;
@@ -215,13 +209,8 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 950000;
-        consensus.BIP34Height = DISABLE_HEIGHT;
-        consensus.BIP34Hash = uint256S("0x0000000023b3a96d3484e5abb3755c413e7d4"
-                                       "1500f8e2a5c3f0dd01299cd8ef8");
-        // 00000000007f6655f22f98e72ed80d8b06dc761d5da09df0fa1dc4be4f861eb6
         consensus.BIP65Height = DISABLE_HEIGHT;
-        // 000000002104c8c45e99a8853285a3b592602a3ccde2b832481da85e9e4ba182
-        consensus.BIP66Height = DISABLE_HEIGHT;
+        consensus.BIP66Height = 0;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
         consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
@@ -329,10 +318,6 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
-        // BIP34 has not activated on regtest (far in the future so block v1 are
-        // not rejected in tests)
-        consensus.BIP34Height = 100000000;
-        consensus.BIP34Hash = uint256();
         // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP65Height = 1351;
         // BIP66 activated on regtest (Used in rpc activation tests)
