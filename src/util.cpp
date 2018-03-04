@@ -834,7 +834,7 @@ std::string CopyrightHolders(const std::string &strPrefix) {
     // is not removed by accident.
     if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION)
             .find("Maza") == std::string::npos) {
-        strCopyrightHolders += "\n" + strPrefix + "The Maze developers";
+        strCopyrightHolders += "\n" + strPrefix + "The Maza developers";
     }
     return strCopyrightHolders;
 }

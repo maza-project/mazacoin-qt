@@ -29,7 +29,7 @@
 SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle)
     : QWidget(0, f), curAlignment(0) {
     // set reference point, paddings
-    int paddingRight = 50;
+    int paddingRight = 120;
     int paddingTop = 50;
     int titleVersionVSpace = 17;
     int titleCopyrightVSpace = 40;
@@ -45,9 +45,13 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle)
     QString titleText = tr(PACKAGE_NAME);
     QString versionText =
         QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightText = QString::fromUtf8(
+    QString copyrightTextMaza = QString::fromUtf8(
         CopyrightHolders(strprintf("\xc2\xA9 %u-%u ", 2009, COPYRIGHT_YEAR))
             .c_str());
+    QString copyrightText = QString::fromUtf8(
+                                (strprintf("\xc2\xA9 %u-%u Bitcoin-ABC developers", 2009, 2017))
+                                .c_str());
+        
     QString titleAddText = networkStyle->getTitleAddText();
 
     QString font = QApplication::font().toString();
@@ -119,6 +123,17 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle)
         pixPaint.drawText(copyrightRect,
                           Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
                           copyrightText);
+        
+        // Add vertical space of 20
+        const int yy = y + 20;
+        QRect copyrightRectMaza(x, yy, pixmap.width() - x - paddingRight,
+                            pixmap.height() - yy);
+        pixPaint.drawText(copyrightRectMaza,
+                          Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap,
+                          copyrightTextMaza);
+
+        
+        
     }
 
     // draw additional text if special network
