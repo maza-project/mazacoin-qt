@@ -94,6 +94,7 @@ public:
     CMainParams() {
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 950000;
+        consensus.BIP34Height = 0;
         consensus.BIP65Height = DISABLE_HEIGHT;
         consensus.BIP66Height = 0;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
@@ -209,6 +210,7 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 950000;
+        consensus.BIP34Height = 100; // Guess
         consensus.BIP65Height = DISABLE_HEIGHT;
         consensus.BIP66Height = 0;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
@@ -300,12 +302,12 @@ public:
         // (height 1063660)
         chainTxData = ChainTxData{
             // UNIX timestamp of last known number of transactions.
-            1374901773,
+            1520575285,
             // Total number of transactions between genesis and that timestamp
             // (the tx=... number in the SetBestChain debug.log lines)
-            0,
+            421700,
             // Estimated number of transactions per second after that timestamp.
-            2880};
+            0.008333};
     }
 };
 static CTestNetParams testNetParams;
