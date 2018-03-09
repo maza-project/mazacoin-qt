@@ -1889,28 +1889,23 @@ static bool ConnectBlock(const Config &config, const CBlock &block,
         fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
 
     // Start enforcing the DERSIG (BIP66) rule
-    if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
+    //if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
         flags |= SCRIPT_VERIFY_DERSIG;
-    }
+    //}
 
-    // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
-    if (pindex->nHeight >= chainparams.GetConsensus().BIP65Height) {
-        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
-    }
+    const bool hasUAHF = IsUAHFenabled(config, pindex->pprev);
 
-    // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY)
-    // using versionbits logic.
     int nLockTimeFlags = 0;
-    if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(),
-                         Consensus::DEPLOYMENT_CSV,
-                         versionbitscache) == THRESHOLD_ACTIVE) {
+
+    if (hasUAHF) {
+        // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule after HF
+        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    
+        // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY)
         flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
-    }
-
-    // If the UAHF is enabled, we start accepting replay protected txns
-    const bool hasUAHF = IsUAHFenabled(config, pindex->pprev);
-    if (hasUAHF) {
+    
+        // If the UAHF is enabled, we start accepting replay protected txns
         flags |= SCRIPT_VERIFY_STRICTENC;
         flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
     }
