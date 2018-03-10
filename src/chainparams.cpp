@@ -249,6 +249,7 @@ public:
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(consensus.hashGenesisBlock == uint256S("0x000003ae7f631de18a457fa4fa078e6fa8aff38e258458f8189810de5d62cede"));
         /*
+          std::cout << genesis.hashMerkleRoot.ToString() << "\n";
           assert(genesis.hashMerkleRoot ==
           uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab212"
           "7b7afdeda33b"));
@@ -310,9 +311,9 @@ public:
                                       "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.startingDifficulty = uint256S(
                                       "3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-         // two weeks
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;
-        consensus.nPowTargetSpacing = 10 * 60;
+
+        consensus.nPowTargetTimespan = 8 * 60;
+        consensus.nPowTargetSpacing = 2 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
         // 75% for testchains
