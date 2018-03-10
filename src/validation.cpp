@@ -3317,8 +3317,9 @@ bool ContextualCheckBlockHeader(const CBlockHeader &block,
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network
     // has upgraded:
-    // check for version 2, 3 and 4 upgrades
-    if (block.nVersion < 4 && nHeight >= consensusParams.BIP65Height) {
+    // check for version 2, 3 upgrades
+    if ((block.nVersion < 2 && nHeight >= consensusParams.BIP34Height) ||
+        (block.nVersion < 3 && nHeight >= consensusParams.BIP66Height)) {
         return state.Invalid(
             false, REJECT_OBSOLETE,
             strprintf("bad-version(0x%08x)", block.nVersion),
@@ -3420,7 +3421,7 @@ bool ContextualCheckBlock(const Config &config, const CBlock &block,
     }
 
     // Enforce rule that the coinbase starts with serialized block height
-    if (nHeight >= consensusParams.BIP34Height) { // 100 Guess
+    if (nHeight >= consensusParams.BIP34Height) {
         CScript expect = CScript() << nHeight;
         if (block.vtx[0]->vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(),

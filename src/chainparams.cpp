@@ -96,7 +96,7 @@ public:
         consensus.nSubsidyHalvingInterval = 950000;
         consensus.BIP34Height = 0;
         consensus.BIP65Height = DISABLE_HEIGHT;
-        consensus.BIP66Height = 0;
+        consensus.BIP66Height = 756218;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
         consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
@@ -210,7 +210,7 @@ public:
     CTestNetParams() {
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 950000;
-        consensus.BIP34Height = 100; // Guess
+        consensus.BIP34Height = 100; // Guess - somewhere between 10 and 100
         consensus.BIP65Height = DISABLE_HEIGHT;
         consensus.BIP66Height = 0;
         consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
