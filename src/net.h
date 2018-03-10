@@ -700,8 +700,6 @@ public:
     std::atomic<int64_t> nMinPingUsecTime;
     // Whether a ping is requested.
     std::atomic<bool> fPingQueued;
-    // Whether the node uses the bitcoin cash magic to communicate.
-    std::atomic<bool> fUsesCashMagic;
     // Minimum fee rate with which to filter inv's to this node
     CAmount minFeeFilter;
     CCriticalSection cs_feeFilter;
@@ -752,10 +750,7 @@ public:
     int GetSendVersion() const;
 
     const CMessageHeader::MessageStartChars &
-    GetMagic(const CChainParams &params) const {
-        return fUsesCashMagic ? params.CashMessageStart()
-                              : params.MessageStart();
-    }
+    GetMagic(const CChainParams &params) const { return params.MessageStart();    }
 
     CService GetAddrLocal() const;
     //! May not be called more than once
