@@ -299,13 +299,18 @@ public:
     CRegTestParams() {
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
+        // BIP34 has not activated on regtest (far in the future so block v1 are
+        // not rejected in tests)
+        consensus.BIP34Height = 100000000;
         // BIP65 activated on regtest (Used in rpc activation tests)
         consensus.BIP65Height = 1351;
         // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251;
         consensus.powLimit = uint256S(
-            "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        // two weeks
+                                      "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.startingDifficulty = uint256S(
+                                      "3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+         // two weeks
         consensus.nPowTargetTimespan = 14 * 24 * 60 * 60;
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
@@ -330,26 +335,27 @@ public:
         // valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        // Hard fork is always enabled on regtest.
-        consensus.uahfStartTime = 0;
+        // TBD: Hard fork is always enabled on regtest.
+        consensus.uahfStartTime = 9876543210;
 
         pchMessageStart[0] = 0xfa;
-        pchMessageStart[1] = 0xbf;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xda;
-        nDefaultPort = 18444;
+        pchMessageStart[1] = 0x0f;
+        pchMessageStart[2] = 0xa5;
+        pchMessageStart[3] = 0x5a;
+        nDefaultPort = 11444;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1296688602, 2, 0x207fffff, 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1390748221, 4, 0x207fffff, 1, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        /*
+        
+        //std::cout << genesis.GetHash().ToString() << "\n";
+        //std::cout << genesis.hashMerkleRoot.ToString() << "\n";
+
         assert(consensus.hashGenesisBlock ==
-               uint256S("0x0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b"
-                        "1a11466e2206"));
+               uint256S("57939ce0a96bf42965fee5956528a456d0edfb879b8bd699bcbb4786d27b979d"));
         assert(genesis.hashMerkleRoot ==
-               uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab212"
-                        "7b7afdeda33b"));
-*/
+               uint256S("62d496378e5834989dd9594cfc168dbb76f84a39bbda18286cddc7d1d1589f4f"));
+
         //!< Regtest mode doesn't have any fixed seeds.
         vFixedSeeds.clear();
         //!< Regtest mode doesn't have any DNS seeds.
@@ -361,8 +367,7 @@ public:
         fMineBlocksOnDemand = true;
 
         checkpointData = {.mapCheckpoints = {
-                              {0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5"
-                                           "beb436012afca590b1a11466e2206")},
+                              {0, uint256S("57939ce0a96bf42965fee5956528a456d0edfb879b8bd699bcbb4786d27b979d")},
                           }};
 
         chainTxData = ChainTxData{0, 0, 0};
@@ -372,6 +377,7 @@ public:
         base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        
     }
 
     void UpdateBIP9Parameters(Consensus::DeploymentPos d, int64_t nStartTime,
