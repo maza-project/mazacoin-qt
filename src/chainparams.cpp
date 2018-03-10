@@ -12,18 +12,6 @@
 
 #include <cassert>
 
-#define DISABLE_HEIGHT 987654321
-#define DISABLE_TIME 9876543210
-
-// Far into the future.
-static const std::string ANTI_REPLAY_COMMITMENT =
-    "Maza: A Peer-to-Peer Electronic Cash System";
-
-static std::vector<uint8_t> GetAntiReplayCommitment() {
-    return std::vector<uint8_t>(std::begin(ANTI_REPLAY_COMMITMENT),
-                                std::end(ANTI_REPLAY_COMMITMENT));
-}
-
 static CBlock CreateGenesisBlock(const char *pszTimestamp,
                                  const CScript &genesisOutputScript,
                                  uint32_t nTime, uint32_t nNonce,
@@ -95,10 +83,7 @@ public:
         strNetworkID = "main";
         consensus.nSubsidyHalvingInterval = 950000;
         consensus.BIP34Height = 0;
-        consensus.BIP65Height = DISABLE_HEIGHT;
         consensus.BIP66Height = 756218;
-        consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
-        consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
             "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.startingDifficulty = uint256S(
@@ -138,8 +123,8 @@ public:
             uint256S("0x000000000000000000ff3a41f208c932d5f91fe8d0739fca36152f6"
                      "073b2ef5e");
 
-        // Aug, 1 hard fork
-        consensus.uahfStartTime = DISABLE_TIME;
+        // hard fork time. This will be changed once we set the time. Right now effectively disabled
+        consensus.uahfStartTime = 9876543210;
 
 
         /**
@@ -211,10 +196,7 @@ public:
         strNetworkID = "test";
         consensus.nSubsidyHalvingInterval = 950000;
         consensus.BIP34Height = 100; // Guess - somewhere between 10 and 100
-        consensus.BIP65Height = DISABLE_HEIGHT;
         consensus.BIP66Height = 0;
-        consensus.antiReplayOpReturnSunsetHeight = DISABLE_HEIGHT;
-        consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
                                       "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.startingDifficulty = uint256S(
@@ -235,7 +217,8 @@ public:
         // December 31, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout =  1230767999;
 
-        consensus.uahfStartTime = DISABLE_TIME;
+        // hard fork time. This will be changed once we set the time. Right now effectively disabled
+        consensus.uahfStartTime = 9876543210;
         
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
@@ -324,8 +307,6 @@ public:
         consensus.BIP65Height = 1351;
         // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251;
-        consensus.antiReplayOpReturnSunsetHeight = 530000;
-        consensus.antiReplayOpReturnCommitment = GetAntiReplayCommitment();
         consensus.powLimit = uint256S(
             "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // two weeks
