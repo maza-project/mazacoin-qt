@@ -337,7 +337,7 @@ public:
         consensus.defaultAssumeValid = uint256S("0x00");
 
         // TBD: Hard fork is always enabled on regtest.
-        consensus.uahfStartTime = 9876543210;
+        consensus.uahfStartTime = 20;///9876543210;
 
         pchMessageStart[0] = 0xfa;
         pchMessageStart[1] = 0x0f;
