@@ -5,7 +5,7 @@
 
 #include "chainparams.h"
 #include "consensus/merkle.h"
-
+#include "primitives/pureheader.h"
 #include "tinyformat.h"
 #include "util.h"
 #include "utilstrencodings.h"
@@ -84,10 +84,13 @@ public:
         consensus.nSubsidyHalvingInterval = 950000;
         consensus.BIP34Height = 0;
         consensus.BIP66Height = 756218;
-        consensus.powLimit = uint256S(
-            "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT1] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT2] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT3] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SHA256] = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        
         consensus.startingDifficulty = uint256S(
-            "00000003ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+"00000003ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         // two weeks
         consensus.nPowTargetTimespan = 8 * 60; // ???14 * 24 * 60 * 60;
         consensus.nPowTargetSpacing = 2 * 60;
@@ -96,6 +99,18 @@ public:
         // 95% of 2016
         consensus.nRuleChangeActivationThreshold = consensus.nPowTargetTimespan / consensus.nPowTargetSpacing;
         consensus.nMinerConfirmationWindow = 2016;
+        
+        consensus.nPoWAveragingInterval = 10;             // 10 block averaging interval
+        consensus.nMaxAdjustUp = 5;                       // 5% adjustment up
+        consensus.nMaxAdjustDown = 5;                     // 5% adjustment down
+
+        consensus.nBlockSequentialAlgoMaxCountV1 = 3;     // maximum sequential blocks of same algo V1
+        consensus.nBlockSequentialAlgoMaxCountV2 = 5;     // maximum sequential blocks of same algo V2
+        consensus.nStartAuxPow = 0;
+        consensus.nAuxpowChainId = 0x9B;                  // unitus chain id 155
+        consensus.fStrictChainId = false;
+        consensus.nLegacyBlocksBefore = -1;
+        
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime =
@@ -118,6 +133,12 @@ public:
         // hard fork time. This will be changed once we set the time. Right now effectively disabled
         consensus.uahfStartTime = 9876543210;
 
+        // For Now
+        consensus.nTimeLyra2RE2Start = consensus.uahfStartTime;                  // block time where Lyra2RE2 starts (Mon, 22 Feb 2016 00:09:24 GMT)
+        consensus.nTimeArgon2dStart = consensus.uahfStartTime;                  // block time where Lyra2RE2 starts (Mon, 22 Feb 2016 00:09:24 GMT)
+        consensus.nBlockAlgoNormalisedWorkDecayV2Start = 25300;     // block where weight decay v2 starts
+        consensus.nGeometricAverageWork_Start = 450000;             // block where geometric average work calculation kicks in
+        consensus.nBlockSequentialAlgoRule2Start = 456000;          // block where sequential algo rule V2 starts
 
         /**
          * The message start string is designed to be unlikely to occur in
@@ -189,9 +210,11 @@ public:
         consensus.nSubsidyHalvingInterval = 950000;
         consensus.BIP34Height = 100; // Guess - somewhere between 10 and 100
         consensus.BIP66Height = 0;
-        consensus.powLimit = uint256S(
-                                      "00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.startingDifficulty = uint256S(
+        consensus.powLimit[ALGO_SLOT1] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT2] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT3] = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SHA256] = uint256S("0000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+       consensus.startingDifficulty = uint256S(
                                                 "00000003ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
         // two weeks
@@ -203,6 +226,19 @@ public:
         consensus.nRuleChangeActivationThreshold = 1512;
         // nPowTargetTimespan / nPowTargetSpacing
         consensus.nMinerConfirmationWindow = 2016;
+
+        consensus.nBlockSequentialAlgoMaxCountV1 = 3;     // maximum sequential blocks of same algo V1
+        consensus.nBlockSequentialAlgoMaxCountV2 = 5;     // maximum sequential blocks of same algo V2
+        consensus.nStartAuxPow = 0;
+        consensus.nAuxpowChainId = 0x9C;                  // unitus testnet chain id 156
+        consensus.fStrictChainId = false;
+        consensus.nLegacyBlocksBefore = -1;
+        
+        consensus.nTimeLyra2RE2Start = 1456099764; // block time where blake hash is replaced with Lyra2RE2 (Mon, 22 Feb 2016 00:09:24 GMT)
+        consensus.nTimeArgon2dStart = 1491705000; // block time where Qubit hash is replaced with Argon2d (Sun, 09 Apr 2017 02:30:00 GMT)
+        consensus.nBlockAlgoNormalisedWorkDecayV2Start = 40;     // block where weight decay v2 starts
+        consensus.nGeometricAverageWork_Start = 60;           // block where geometric average work calculation kicks in
+        consensus.nBlockSequentialAlgoRule2Start = 70;           // block where sequential algo rule V2 starts
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601;
@@ -292,8 +328,6 @@ public:
         consensus.BIP65Height = 1351;
         // BIP66 activated on regtest (Used in rpc activation tests)
         consensus.BIP66Height = 1251;
-        consensus.powLimit = uint256S(
-                                      "7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.startingDifficulty = uint256S(
                                       "3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
@@ -305,6 +339,18 @@ public:
         consensus.nRuleChangeActivationThreshold = 108;
         // Faster than normal for regtest (144 instead of 2016)
         consensus.nMinerConfirmationWindow = 144;
+
+        
+        consensus.powLimit[ALGO_SLOT1] = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT2] = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SLOT3] = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.powLimit[ALGO_SHA256] = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+ 
+        consensus.nPoWAveragingInterval = 10; // 10 block averaging interval
+        consensus.nMaxAdjustDown = 4; // 4% adjustment downwards
+        consensus.nMaxAdjustUp = 4; // %4 adjustment upwards
+        
+        consensus.nMinerConfirmationWindow = 144; // Faster than normal for regtest (144 instead of 2016)
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 0;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout =

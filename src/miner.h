@@ -160,10 +160,10 @@ private:
 public:
     BlockAssembler(const Config &_config, const CChainParams &chainparams);
     /** Construct a new block template with coinbase to scriptPubKeyIn */
-    std::unique_ptr<CBlockTemplate>
-    CreateNewBlock(const CScript &scriptPubKeyIn);
-
+    std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn, int algo);
+    
     uint64_t GetMaxGeneratedBlockSize() const { return nMaxGeneratedBlockSize; }
+
 
 private:
     // utility functions

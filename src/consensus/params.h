@@ -10,6 +10,8 @@
 #include <map>
 #include <string>
 
+const int algoCount = 4;
+
 namespace Consensus {
 
 enum DeploymentPos {
@@ -55,18 +57,48 @@ struct Params {
     uint32_t nMinerConfirmationWindow;
     BIP9Deployment vDeployments[MAX_VERSION_BITS_DEPLOYMENTS];
     /** Proof of work parameters */
-    uint256 powLimit;
+    uint256 powLimit[algoCount];
     uint256 startingDifficulty;
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
     int64_t nPowTargetTimespan;
-    int64_t DifficultyAdjustmentInterval() const {
-        return nPowTargetTimespan / nPowTargetSpacing;
-    }
+    int64_t nPoWAveragingInterval;
+    int64_t nPoWAveragingTargetTimespan() const { return nPoWAveragingInterval * nPowTargetSpacing * algoCount; }
+    int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
+
+    int64_t nMaxAdjustDown;
+    int64_t nMaxAdjustUp;
+
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
 
+    /** Auxpow parameters */
+    int16_t nAuxpowChainId;
+    bool fStrictChainId;
+    int nStartAuxPow;
+    int nLegacyBlocksBefore; // -1 for "always allow"
+
+    uint32_t nTimeLyra2RE2Start;
+    uint32_t nTimeArgon2dStart;
+    int nBlockAlgoNormalisedWorkDecayV2Start;   // block where weight decay v2 starts
+    int nGeometricAverageWork_Start;            // block where geometric average work calculation kicks in
+    int nBlockSequentialAlgoRule2Start;         // block where sequential algo rule V2 starts
+
+    int nBlockSequentialAlgoMaxCountV1;         // maximum sequential blocks of same algo V1
+    int nBlockSequentialAlgoMaxCountV2;         // maximum sequential blocks of same algo V2
+
+    /**
+     * Check whether or not to allow legacy blocks at the given height.
+     * @param nHeight Height of the block to check.
+     * @return True if it is allowed to have a legacy version.
+     */
+    bool AllowLegacyBlocks(unsigned nHeight) const
+    {
+        if (nLegacyBlocksBefore < 0)
+            return true;
+        return static_cast<int> (nHeight) < nLegacyBlocksBefore;
+    }
     /** The time at which UAHF starts. */
     int64_t uahfStartTime;
 };
