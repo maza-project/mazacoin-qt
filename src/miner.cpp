@@ -48,6 +48,7 @@ static const int MAX_COINBASE_SCRIPTSIG_SIZE = 100;
 
 uint64_t nLastBlockTx = 0;
 uint64_t nLastBlockSize = 0;
+uint64_t nLastBlockWeight = 0;
 
 class ScoreCompare {
 public:
@@ -139,7 +140,8 @@ getExcessiveBlockSizeSig(const Config &config) {
 }
 
 std::unique_ptr<CBlockTemplate>
-BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn) {
+BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn, int algo)
+{
     int64_t nTimeStart = GetTimeMicros();
 
     resetBlock();
@@ -171,6 +173,9 @@ BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn) {
         pblock->nVersion = GetArg("-blockversion", pblock->nVersion);
     }
 
+    // multi-algo: encode algo into nVersion
+    pblock->SetAlgo(algo);
+    
     pblock->nTime = GetAdjustedTime();
     nMedianTimePast = pindexPrev->GetMedianTimePast();
     nMaxGeneratedBlockSize = ComputeMaxGeneratedBlockSize(*config, pindexPrev);

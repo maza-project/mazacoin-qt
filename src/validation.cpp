@@ -1045,6 +1045,20 @@ bool GetTransaction(const Config &config, const uint256 &txid,
 // CBlock and CBlockIndex
 //
 
+bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params)
+{
+    int algo = block.GetAlgo();
+    if (!CheckProofOfWork(block.GetHash(), algo, block.nBits, params))
+            return error("%s : proof of work failed, hash=%s, algo=%d, nVersion=%d",
+                         __func__,
+                         block.GetHash().ToString(),
+                         algo,
+                         block.nVersion
+                         );
+    return true;
+}
+
+
 bool WriteBlockToDisk(const CBlock &block, CDiskBlockPos &pos,
                       const CMessageHeader::MessageStartChars &messageStart) {
     // Open history file to append
@@ -1084,8 +1098,8 @@ bool ReadBlockFromDisk(CBlock &block, const CDiskBlockPos &pos,
     }
 
     // Check the header
-    if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
-        return error("ReadBlockFromDisk: Errors in block header at %s",
+    if (!CheckProofOfWork(block, consensusParams))
+       return error("ReadBlockFromDisk: Errors in block header at %s",
                      pos.ToString());
 
     return true;
@@ -1100,6 +1114,51 @@ bool ReadBlockFromDisk(CBlock &block, const CBlockIndex *pindex,
                      "doesn't match index for %s at %s",
                      pindex->ToString(), pindex->GetBlockPos().ToString());
     return true;
+}
+
+
+/* Generic implementation of block reading that can handle
+   both a block and its header.  */
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams)
+{
+    block.SetNull();
+
+    // Open history file to read
+    CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    if (filein.IsNull())
+        return error("ReadBlockFromDisk: OpenBlockFile failed for %s", pos.ToString());
+
+    // Read block
+    try {
+        filein >> block;
+    }
+    catch (const std::exception& e) {
+        return error("%s: Deserialize or I/O error - %s at %s", __func__, e.what(), pos.ToString());
+    }
+
+    // Check the header
+    if (!CheckProofOfWork(block, consensusParams))
+        return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
+
+    return true;
+}
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams)
+{
+    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), consensusParams))
+        return false;
+    if (block.GetHash() != pindex->GetBlockHash())
+        return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
+                pindex->ToString(), pindex->GetBlockPos().ToString());
+    return true;
+}
+
+bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams)
+{
+    return ReadBlockOrHeader(block, pindex, consensusParams);
 }
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams) {
@@ -3146,7 +3205,7 @@ bool CheckBlockHeader(const CBlockHeader &block, CValidationState &state,
                       bool fCheckPOW) {
     // Check proof of work matches claimed amount
     if (fCheckPOW &&
-        !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
+        !CheckProofOfWork(block, consensusParams))
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false,
                          "proof of work failed");
 
@@ -3461,6 +3520,22 @@ static bool AcceptBlockHeader(const Config &config, const CBlockHeader &block,
                              REJECT_INVALID, "bad-prevblk");
         }
 
+        int nAlgo = block.GetAlgo();
+        int nAlgoCount = 1;
+        CBlockIndex* piPrev = pindexPrev;
+        // Maximum sequence count allowed
+        int nMaxSeqCount = chainparams.GetConsensus().Params::nBlockSequentialAlgoMaxCountV1;
+        while (piPrev!=nullptr && (nAlgoCount <= nMaxSeqCount))
+        {
+            if (piPrev->GetAlgo() != nAlgo)
+                break;
+            nAlgoCount++;
+            piPrev = piPrev->pprev;
+        }
+        if ((nAlgoCount > nMaxSeqCount) && IsUAHFenabled(config, pindexPrev)) {
+            return error("%s: too many blocks from same algorithm (limit=%d)", __func__, nMaxSeqCount);
+        }
+        
         assert(pindexPrev);
         if (fCheckpointsEnabled &&
             !CheckIndexAgainstCheckpoint(pindexPrev, state, chainparams,

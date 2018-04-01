@@ -129,10 +129,13 @@ static UniValue generateBlocks(const Config &config,
 
     unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
+    CBlockIndex *tip = chainActive.Tip();
+    CBlockHeader block = tip->GetBlockHeader();
+    int miningAlgo = block.GetAlgo();
     while (nHeight < nHeightEnd) {
         std::unique_ptr<CBlockTemplate> pblocktemplate(
             BlockAssembler(config, Params())
-                .CreateNewBlock(coinbaseScript->reserveScript));
+            .CreateNewBlock(coinbaseScript->reserveScript, miningAlgo));
         if (!pblocktemplate.get()) {
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
         }
@@ -142,7 +145,7 @@ static UniValue generateBlocks(const Config &config,
             IncrementExtraNonce(config, pblock, chainActive.Tip(), nExtraNonce);
         }
         while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount &&
-               !CheckProofOfWork(pblock->GetHash(), pblock->nBits,
+               !CheckProofOfWork(pblock->GetHash(), miningAlgo,  pblock->nBits,
                                  Params().GetConsensus())) {
             ++pblock->nNonce;
             --nMaxTries;
@@ -269,9 +272,23 @@ static UniValue getmininginfo(const Config &config,
             "  \"currentblocksize\": nnn,   (numeric) The last block size\n"
             "  \"currentblocktx\": nnn,     (numeric) The last block "
             "transaction\n"
+            "  \"pow_algo_id\": n           (numeric) The active mining "
+            "algorithm id\n"
+            "  \"pow_algo\": \"name\"       (string) The active mining "
+            "algorithm name\n"
             "  \"difficulty\": xxx.xxxxx    (numeric) The current difficulty\n"
+            "  \"difficulty_lyra2re2\": xxxxxx,  (numeric) the current "
+            "lyra2re2 difficulty\n"
+            "  \"difficulty_skein\": xxxxxx,     (numeric) the current skein "
+            "difficulty\n"
+            "  \"difficulty_argon2d\": xxxxxx,   (numeric) the current argon2d "
+            "difficulty\n"
+            "  \"difficulty_yescrypt\": xxxxxx,  (numeric) the current "
+            "yescrypt difficulty\n"
+            "  \"difficulty_x11\": xxxxxx,       (numeric) the current x11 "
+            "difficulty\n"
             "  \"errors\": \"...\"            (string) Current errors\n"
-            "  \"networkhashps\": nnn,      (numeric) The network hashes per "
+            "  \"networkhashps\": nnn,        (numeric) The network hashes per "
             "second\n"
             "  \"pooledtx\": n              (numeric) The size of the mempool\n"
             "  \"chain\": \"xxxx\",           (string) current network name as "
@@ -284,14 +301,29 @@ static UniValue getmininginfo(const Config &config,
 
     LOCK(cs_main);
 
+    CBlockIndex *tip = chainActive.Tip();
+    CBlockHeader block = tip->GetBlockHeader();
+    int miningAlgo = block.GetAlgo();
+
     UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("blocks", int(chainActive.Height())));
+    obj.push_back(Pair("blocks", (int)chainActive.Height()));
     obj.push_back(Pair("currentblocksize", uint64_t(nLastBlockSize)));
     obj.push_back(Pair("currentblocktx", uint64_t(nLastBlockTx)));
-    obj.push_back(Pair("difficulty", double(GetDifficulty())));
     obj.push_back(Pair("blockprioritypercentage",
                        uint8_t(GetArg("-blockprioritypercentage",
                                       DEFAULT_BLOCK_PRIORITY_PERCENTAGE))));
+    obj.push_back(Pair("pow_algo_id", miningAlgo));
+    obj.push_back(Pair("pow_algo", GetAlgoName(miningAlgo, GetTime(),
+                                               Params().GetConsensus())));
+    obj.push_back(Pair("difficulty", (double)GetDifficulty(NULL, miningAlgo)));
+    obj.push_back(
+        Pair("difficulty_lyra2re2", (double)GetDifficulty(NULL, ALGO_SLOT1)));
+    obj.push_back(
+        Pair("difficulty_skein", (double)GetDifficulty(NULL, ALGO_SLOT2)));
+    obj.push_back(
+        Pair("difficulty_argon2d", (double)GetDifficulty(NULL, ALGO_SLOT3)));
+    obj.push_back(
+        Pair("difficulty_sha256", (double)GetDifficulty(NULL, ALGO_SHA256)));
     obj.push_back(Pair("errors", GetWarnings("statusbar")));
     obj.push_back(Pair("networkhashps", getnetworkhashps(config, request)));
     obj.push_back(Pair("pooledtx", uint64_t(mempool.size())));
@@ -648,6 +680,11 @@ static UniValue getblocktemplate(const Config &config,
     static CBlockIndex *pindexPrev;
     static int64_t nStart;
     static std::unique_ptr<CBlockTemplate> pblocktemplate;
+    
+    CBlockIndex *tip = chainActive.Tip();
+    CBlockHeader block = tip->GetBlockHeader();
+    int miningAlgo = block.GetAlgo();
+
     if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast &&
          GetTime() - nStart > 5)) {
@@ -663,11 +700,10 @@ static UniValue getblocktemplate(const Config &config,
         // Create new block
         CScript scriptDummy = CScript() << OP_TRUE;
         pblocktemplate =
-            BlockAssembler(config, Params()).CreateNewBlock(scriptDummy);
+            BlockAssembler(config, Params()).CreateNewBlock(scriptDummy, miningAlgo);
         if (!pblocktemplate) {
             throw JSONRPCError(RPC_OUT_OF_MEMORY, "Out of memory");
         }
-
         // Need to update only after we know CreateNewBlock succeeded
         pindexPrev = pindexPrevNew;
     }

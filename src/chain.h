@@ -280,7 +280,9 @@ public:
     }
 
     uint256 GetBlockHash() const { return *phashBlock; }
-
+    
+    int GetAlgo() const { return ::GetAlgo(nVersion);}
+    
     int64_t GetBlockTime() const { return (int64_t)nTime; }
 
     int64_t GetBlockTimeMax() const { return (int64_t)nTimeMax; }
@@ -337,14 +339,17 @@ public:
     const CBlockIndex *GetAncestor(int height) const;
 };
 
-arith_uint256 GetBlockProof(const CBlockIndex &block);
-/** Return the time it would take to redo the work difference between from and
- * to, assuming the current hashrate corresponds to the difficulty at tip, in
- * seconds. */
-int64_t GetBlockProofEquivalentTime(const CBlockIndex &to,
-                                    const CBlockIndex &from,
-                                    const CBlockIndex &tip,
-                                    const Consensus::Params &);
+arith_uint256 GetBlockProof(const CBlockIndex& block);
+/** Return the time it would take to redo the work difference between from and to, assuming the current hashrate corresponds to the difficulty at tip, in seconds. */
+
+int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params&);
+
+
+/** Return the index to the last block of algo */
+const CBlockIndex* GetLastBlockIndexForAlgo(const CBlockIndex* pindex, int algo);
+
+/** Return name of algorithm depending on algo-id, time and consensus parameters */
+std::string GetAlgoName(int Algo, uint32_t time, const Consensus::Params& consensusParams);
 
 /** Used to marshal pointers into hashes for db storage. */
 class CDiskBlockIndex : public CBlockIndex {
