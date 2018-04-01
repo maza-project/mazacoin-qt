@@ -1045,6 +1045,22 @@ bool GetTransaction(const Config &config, const uint256 &txid,
 // CBlock and CBlockIndex
 //
 
+bool CheckProofOfWork(const CBlockHeader& block, const Consensus::Params& params)
+{
+       int algo = block.GetAlgo();
+        if (!CheckProofOfWork(block.GetPoWHash(params), algo, block.nBits, params))
+            return error("%s : non-AUX proof of work failed, hash=%s, algo=%d, nVersion=%d, PoWHash=%s",
+                         __func__,
+                         block.GetHash().ToString(),
+                         algo,
+                         block.nVersion,
+                         block.GetPoWHash(params).ToString()
+                         );
+        
+        return true;
+}
+
+
 bool WriteBlockToDisk(const CBlock &block, CDiskBlockPos &pos,
                       const CMessageHeader::MessageStartChars &messageStart) {
     // Open history file to append
@@ -1084,8 +1100,8 @@ bool ReadBlockFromDisk(CBlock &block, const CDiskBlockPos &pos,
     }
 
     // Check the header
-    if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
-        return error("ReadBlockFromDisk: Errors in block header at %s",
+    if (!CheckProofOfWork(block, consensusParams))
+       return error("ReadBlockFromDisk: Errors in block header at %s",
                      pos.ToString());
 
     return true;
@@ -1100,6 +1116,51 @@ bool ReadBlockFromDisk(CBlock &block, const CBlockIndex *pindex,
                      "doesn't match index for %s at %s",
                      pindex->ToString(), pindex->GetBlockPos().ToString());
     return true;
+}
+
+
+/* Generic implementation of block reading that can handle
+   both a block and its header.  */
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CDiskBlockPos& pos, const Consensus::Params& consensusParams)
+{
+    block.SetNull();
+
+    // Open history file to read
+    CAutoFile filein(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION);
+    if (filein.IsNull())
+        return error("ReadBlockFromDisk: OpenBlockFile failed for %s", pos.ToString());
+
+    // Read block
+    try {
+        filein >> block;
+    }
+    catch (const std::exception& e) {
+        return error("%s: Deserialize or I/O error - %s at %s", __func__, e.what(), pos.ToString());
+    }
+
+    // Check the header
+    if (!CheckProofOfWork(block, consensusParams))
+        return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
+
+    return true;
+}
+
+template<typename T>
+static bool ReadBlockOrHeader(T& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams)
+{
+    if (!ReadBlockOrHeader(block, pindex->GetBlockPos(), consensusParams))
+        return false;
+    if (block.GetHash() != pindex->GetBlockHash())
+        return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
+                pindex->ToString(), pindex->GetBlockPos().ToString());
+    return true;
+}
+
+bool ReadBlockHeaderFromDisk(CBlockHeader& block, const CBlockIndex* pindex, const Consensus::Params& consensusParams)
+{
+    return ReadBlockOrHeader(block, pindex, consensusParams);
 }
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams) {
@@ -3146,7 +3207,7 @@ bool CheckBlockHeader(const CBlockHeader &block, CValidationState &state,
                       bool fCheckPOW) {
     // Check proof of work matches claimed amount
     if (fCheckPOW &&
-        !CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
+        !CheckProofOfWork(block, consensusParams))
         return state.DoS(50, false, REJECT_INVALID, "high-hash", false,
                          "proof of work failed");
 

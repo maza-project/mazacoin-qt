@@ -58,27 +58,23 @@ static UniValue getinfo(const Config &config, const JSONRPCRequest &request) {
             "  \"proxy\": \"host:port\",     (string, optional) the proxy used "
             "by the server\n"
             "  \"difficulty\": xxxxxx,       (numeric) the current difficulty\n"
-            "  \"testnet\": true|false,      (boolean) if the server is using "
-            "testnet or not\n"
-            "  \"keypoololdest\": xxxxxx,    (numeric) the timestamp (seconds "
-            "since Unix epoch) of the oldest pre-generated key in the key "
-            "pool\n"
-            "  \"keypoolsize\": xxxx,        (numeric) how many new keys are "
-            "pre-generated\n"
-            "  \"unlocked_until\": ttt,      (numeric) the timestamp in "
-            "seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is "
-            "unlocked for transfers, or 0 if the wallet is locked\n"
-            "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set "
-            "in " +
-            CURRENCY_UNIT + "/kB\n"
-                            "  \"relayfee\": x.xxxx,         (numeric) minimum "
-                            "relay fee for non-free transactions in " +
-            CURRENCY_UNIT +
-            "/kB\n"
+            "  \"difficulty_lyra2re2\": xxxxxx,    (numeric) the current lyra2re2 difficulty\n"
+            "  \"difficulty_skein\": xxxxxx,       (numeric) the current skein difficulty\n"
+            "  \"difficulty_argon2d\": xxxxxx,     (numeric) the current argon2d difficulty\n"
+            "  \"difficulty_yescrypt\": xxxxxx,    (numeric) the current yescrypt difficulty\n"
+            "  \"difficulty_x11\": xxxxxx,         (numeric) the current x11 difficulty\n"
+            "  \"testnet\": true|false,      (boolean) if the server is using testnet or not\n"
+            "  \"keypoololdest\": xxxxxx,    (numeric) the timestamp (seconds since Unix epoch) of the oldest pre-generated key in the key pool\n"
+            "  \"keypoolsize\": xxxx,        (numeric) how many new keys are pre-generated\n"
+            "  \"unlocked_until\": ttt,      (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
+            "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set in " + CURRENCY_UNIT + "/kB\n"
+            "  \"relayfee\": x.xxxx,         (numeric) minimum relay fee for non-free transactions in " + CURRENCY_UNIT + "/kB\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
             "}\n"
-            "\nExamples:\n" +
-            HelpExampleCli("getinfo", "") + HelpExampleRpc("getinfo", ""));
+            "\nExamples:\n"
+            + HelpExampleCli("getinfo", "")
+            + HelpExampleRpc("getinfo", "")
+        );
 
 #ifdef ENABLE_WALLET
     LOCK2(cs_main, pwalletMain ? &pwalletMain->cs_wallet : nullptr);
@@ -99,16 +95,23 @@ static UniValue getinfo(const Config &config, const JSONRPCRequest &request) {
             Pair("balance", ValueFromAmount(pwalletMain->GetBalance())));
     }
 #endif
-    obj.push_back(Pair("blocks", (int)chainActive.Height()));
-    obj.push_back(Pair("timeoffset", GetTimeOffset()));
-    if (g_connman)
-        obj.push_back(Pair("connections", (int)g_connman->GetNodeCount(
-                                              CConnman::CONNECTIONS_ALL)));
-    obj.push_back(Pair("proxy", (proxy.IsValid() ? proxy.proxy.ToStringIPPort()
-                                                 : std::string())));
-    obj.push_back(Pair("difficulty", (double)GetDifficulty()));
-    obj.push_back(Pair("testnet", Params().NetworkIDString() ==
-                                      CBaseChainParams::TESTNET));
+    CBlockIndex *tip = chainActive.Tip();
+    CBlockHeader block = tip->GetBlockHeader();
+    int miningAlgo = block.GetAlgo();
+
+    obj.push_back(Pair("blocks",        (int)chainActive.Height()));
+    obj.push_back(Pair("timeoffset",    GetTimeOffset()));
+    if(g_connman)
+        obj.push_back(Pair("connections",   (int)g_connman->GetNodeCount(CConnman::CONNECTIONS_ALL)));
+    obj.push_back(Pair("proxy",         (proxy.IsValid() ? proxy.proxy.ToStringIPPort() : std::string())));
+    obj.push_back(Pair("pow_algo_id", miningAlgo));
+    obj.push_back(Pair("pow_algo", GetAlgoName(miningAlgo, GetTime(), Params().GetConsensus())));
+    obj.push_back(Pair("difficulty",    (double)GetDifficulty(NULL, miningAlgo)));
+    obj.push_back(Pair("difficulty_lyra2re2",   (double)GetDifficulty(NULL, ALGO_SLOT1)));
+    obj.push_back(Pair("difficulty_skein",      (double)GetDifficulty(NULL, ALGO_SLOT2)));
+    obj.push_back(Pair("difficulty_argon2d",    (double)GetDifficulty(NULL, ALGO_SLOT3)));
+    obj.push_back(Pair("difficulty_sha256",   (double)GetDifficulty(NULL, ALGO_SHA256)));
+    obj.push_back(Pair("testnet",       Params().NetworkIDString() == CBaseChainParams::TESTNET));
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
         obj.push_back(

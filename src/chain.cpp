@@ -4,6 +4,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
+#include "chainparams.h"
+//#include "validation.h"
 
 /**
  * CChain implementation
@@ -113,7 +115,8 @@ void CBlockIndex::BuildSkip() {
     if (pprev) pskip = pprev->GetAncestor(GetSkipHeight(nHeight));
 }
 
-arith_uint256 GetBlockProof(const CBlockIndex &block) {
+arith_uint256 GetBlockProofBase(const CBlockIndex& block)
+{
     arith_uint256 bnTarget;
     bool fNegative;
     bool fOverflow;
@@ -126,10 +129,79 @@ arith_uint256 GetBlockProof(const CBlockIndex &block) {
     return (~bnTarget / (bnTarget + 1)) + 1;
 }
 
-int64_t GetBlockProofEquivalentTime(const CBlockIndex &to,
-                                    const CBlockIndex &from,
-                                    const CBlockIndex &tip,
-                                    const Consensus::Params &params) {
+arith_uint256 GetPrevWorkForAlgo(const CBlockIndex& block, int algo)
+{
+    const CBlockIndex* pindex = &block;
+    while (pindex != NULL)
+    {
+        if (pindex->GetAlgo() == algo)
+        {
+            return GetBlockProofBase(*pindex);
+        }
+        pindex = pindex->pprev;
+    }
+    return UintToArith256(Params().GetConsensus().powLimit[algo]);
+}
+
+// similar to V2 but using '100' instead of '32'
+arith_uint256 GetPrevWorkForAlgoWithDecayV3(const CBlockIndex& block, int algo)
+{
+    int nDistance = 0;
+    const CBlockIndex* pindex = &block;
+    pindex = pindex->pprev;
+    while (pindex != NULL)
+    {
+        if (nDistance > 100)
+        {
+            return arith_uint256(0);
+        }
+        if (pindex->GetAlgo() == algo)
+        {
+            arith_uint256 nWork = GetBlockProofBase(*pindex);
+            nWork *= (100 - nDistance);
+            nWork /= 100;
+            return nWork;
+        }
+        pindex = pindex->pprev;
+        nDistance++;
+    }
+    return arith_uint256(0);
+}
+
+// GeometricMeanPrevWork
+arith_uint256 GetBlockProof(const CBlockIndex& block)
+{
+    //arith_uint256 bnRes;
+    arith_uint256 nBlockWork = GetBlockProofBase(block);
+    uint256 bnBlockWork = ArithToUint256(nBlockWork);
+    int nAlgo = block.GetAlgo();
+    
+    // For other Algs
+    for (int algo = 0; algo < NUM_ALGOS; algo++)
+    {
+        if (algo != nAlgo)
+        {
+            arith_uint256 nBlockWorkAlt = GetPrevWorkForAlgoWithDecayV3(block, algo);
+            uint256 bnBlockWorkAlt = ArithToUint256(nBlockWorkAlt);
+            if (nBlockWorkAlt != 0)
+                nBlockWork *= nBlockWorkAlt;
+        }
+    }
+    // Compute the geometric mean
+    /* XWARNING
+    CBigNum bnRes = bnBlockWork.nthRoot(NUM_ALGOS);
+    
+    // Scale to roughly match the old work calculation
+    bnRes <<= 8;
+    
+    //return bnRes;
+    return UintToArith256(bnRes.getuint256());
+     */
+    return nBlockWork;
+}
+
+int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params& params)
+{
     arith_uint256 r;
     int sign = 1;
     if (to.nChainWork > from.nChainWork) {
@@ -143,4 +215,29 @@ int64_t GetBlockProofEquivalentTime(const CBlockIndex &to,
         return sign * std::numeric_limits<int64_t>::max();
     }
     return sign * r.GetLow64();
+}
+
+const CBlockIndex* GetLastBlockIndexForAlgo(const CBlockIndex* pindex, int algo)
+{
+    for (;;)
+    {
+        if (!pindex)
+            return NULL;
+        if (pindex->GetAlgo() == algo)
+            return pindex;
+        pindex = pindex->pprev;
+    }
+}
+
+std::string GetAlgoName(int Algo, uint32_t time, const Consensus::Params& consensusParams)
+{
+    switch (Algo)
+    {
+        case ALGO_SLOT1:  return std::string("Lyra2RE2");
+        case ALGO_SLOT2:  return std::string("Skein");
+        case ALGO_SLOT3:  return std::string("Argon2d");
+        case ALGO_SHA256:  return std::string("SHA256");
+
+    }
+    return std::string("Unknown");
 }
