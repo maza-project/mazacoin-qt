@@ -48,6 +48,7 @@ static const int MAX_COINBASE_SCRIPTSIG_SIZE = 100;
 
 uint64_t nLastBlockTx = 0;
 uint64_t nLastBlockSize = 0;
+uint64_t nLastBlockWeight = 0;
 
 class ScoreCompare {
 public:
@@ -139,7 +140,8 @@ getExcessiveBlockSizeSig(const Config &config) {
 }
 
 std::unique_ptr<CBlockTemplate>
-BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn) {
+BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn, int algo)
+{
     int64_t nTimeStart = GetTimeMicros();
 
     resetBlock();
@@ -163,14 +165,22 @@ BlockAssembler::CreateNewBlock(const CScript &scriptPubKeyIn) {
     CBlockIndex *pindexPrev = chainActive.Tip();
     nHeight = pindexPrev->nHeight + 1;
 
-    pblock->nVersion =
-        ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+    const int32_t nChainId = chainparams.GetConsensus ().nAuxpowChainId;
+    // FIXME: Active version bits after the always-auxpow fork!
+    //const int32_t nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+
+    // use default version blocks for now, change later?
+    const int32_t nVersion = BLOCK_VERSION_DEFAULT;
+    pblock->SetBaseVersion(nVersion, nChainId);
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand()) {
         pblock->nVersion = GetArg("-blockversion", pblock->nVersion);
     }
 
+    // multi-algo: encode algo into nVersion
+    pblock->SetAlgo(algo);
+    
     pblock->nTime = GetAdjustedTime();
     nMedianTimePast = pindexPrev->GetMedianTimePast();
     nMaxGeneratedBlockSize = ComputeMaxGeneratedBlockSize(*config, pindexPrev);

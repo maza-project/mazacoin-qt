@@ -19,7 +19,7 @@ if(CMAKE_CXX_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-project(mazacoin-qt)
+project(newcoin-qt)
 
 set(OPENSSL_VER "1.0.2n")
 set(BDB_VER "4.8.30")
@@ -137,7 +137,7 @@ SET(SERVER_A
 	./src/miner.cpp
 	./src/net.cpp
 	./src/net_processing.cpp
-    ./src/rpc/abc.cpp
+  ./src/rpc/abc.cpp
 	./src/rpc/blockchain.cpp
 	./src/rpc/client.cpp
 	./src/rpc/mining.cpp
@@ -148,11 +148,14 @@ SET(SERVER_A
 	./src/rpc/server.cpp
     
 	./src/noui.cpp
-    ./src/policy/fees.cpp
-    ./src/policy/policy.cpp
+  ./src/policy/fees.cpp
+  ./src/policy/policy.cpp
 	./src/pow.cpp
 	./src/rest.cpp
-    
+
+  ./src/auxpow.cpp
+  ./src/merkle.cpp
+  
 	./src/timedata.cpp
 	./src/torcontrol.cpp
 	./src/txdb.cpp
@@ -191,6 +194,32 @@ SET(CONSENSUS_CRYPTO
 	./src/crypto/sha256.cpp
 	./src/crypto/sha1.cpp
 	./src/crypto/sha512.cpp
+
+    ./src/crypto/argon2/argon2.c
+  ./src/crypto/argon2/best.c
+  ./src/crypto/argon2/thread.c
+  ./src/crypto/argon2/ref.c
+  ./src/crypto/argon2/encoding.c
+  ./src/crypto/argon2/core.c
+  ./src/crypto/argon2/blake2b.c
+
+  ./src/crypto/lyra2/sponge.c
+  ./src/crypto/lyra2/lyra2RE.c
+  ./src/crypto/lyra2/lyra2.c
+
+  ./src/crypto/sha3/skein.c
+  ./src/crypto/sha3/simd.c
+  ./src/crypto/sha3/luffa.c
+  ./src/crypto/sha3/keccak.c
+  ./src/crypto/sha3/jh.c
+  ./src/crypto/sha3/groestl.c
+  ./src/crypto/sha3/echo.c
+  ./src/crypto/sha3/cubehash.c
+  ./src/crypto/sha3/bmw.c
+  ./src/crypto/sha3/blakefast.c
+  ./src/crypto/sha3/blake.c
+  ./src/crypto/sha3/shavite.c
+
 )
 
 SET(SOURCES
@@ -200,6 +229,7 @@ SET(SOURCES
 	./src/compat/glibcxx_sanity.cpp
 	./src/miner.cpp
 	./src/primitives/block.cpp
+	./src/primitives/pureheader.cpp
 	./src/primitives/transaction.cpp
 	./src/script/bitcoinconsensus.cpp
 	./src/script/interpreter.cpp
@@ -265,10 +295,13 @@ file(GLOB HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
 file(GLOB CRYPTO_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/crypto/*.h)
 source_group("CryptoHeaders" FILES ${CRYPTO_HEADERS})
 
+file(GLOB CONSENSUS_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/consensus/*.h)
+source_group("ConsensusHeaders" FILES ${CONSENSUS_HEADERS})
+
 file(GLOB PRIMITIVE_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/primitives/*.h)
 source_group("PrimHeaders" FILES ${PRIMITIVE_HEADERS})
 
-add_library(coin ${HEADERS} ${CRYPTO_HEADERS} ${PRIMITIVE_HEADERS} ${SOURCES} ${ZMQ_SOURCES} ${COMMON_A} ${UTIL_A} ${SERVER_A} ${CONSENSUS} ${CONSENSUS_CRYPTO})
+add_library(coin ${HEADERS} ${CRYPTO_HEADERS} ${CONSENSUS_HEADERS} ${PRIMITIVE_HEADERS} ${SOURCES} ${ZMQ_SOURCES} ${COMMON_A} ${UTIL_A} ${SERVER_A} ${CONSENSUS} ${CONSENSUS_CRYPTO})
 set_property(TARGET coin PROPERTY CXX_STANDARD 11)
 
 add_subdirectory(src)
