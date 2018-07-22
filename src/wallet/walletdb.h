@@ -11,6 +11,12 @@
 #include "primitives/transaction.h"
 #include "wallet/db.h"
 
+#include "libzerocoin/Accumulator.h"
+#include "libzerocoin/Denominations.h"
+#include "primitives/zerocoin.h"
+#include "zerotracker.h"
+
+
 #include <cstdint>
 #include <list>
 #include <string>
@@ -182,6 +188,36 @@ public:
     static void IncrementUpdateCounter();
     static unsigned int GetUpdateCounter();
 
+    bool WriteDeterministicMint(const CDeterministicMint& dMint);
+    bool ReadDeterministicMint(const uint256& hashPubcoin, CDeterministicMint& dMint);
+    bool EraseDeterministicMint(const uint256& hashPubcoin);
+    bool WriteZerocoinMint(const CZerocoinMint& zerocoinMint);
+    bool EraseZerocoinMint(const CZerocoinMint& zerocoinMint);
+    bool ReadZerocoinMint(const CBigNum& bnPubcoinValue, CZerocoinMint& zerocoinMint);
+    bool ReadZerocoinMint(const uint256& hashPubcoin, CZerocoinMint& mint);
+    bool ArchiveMintOrphan(const CZerocoinMint& zerocoinMint);
+    bool ArchiveDeterministicOrphan(const CDeterministicMint& dMint);
+    bool UnarchiveZerocoinMint(const uint256& hashPubcoin, CZerocoinMint& mint);
+    bool UnarchiveDeterministicMint(const uint256& hashPubcoin, CDeterministicMint& dMint);
+    std::list<CZerocoinMint> ListMintedCoins();
+    std::list<CDeterministicMint> ListDeterministicMints();
+    std::list<CZerocoinSpend> ListSpentCoins();
+    std::list<CBigNum> ListSpentCoinsSerial();
+    std::list<CZerocoinMint> ListArchivedZerocoins();
+    std::list<CDeterministicMint> ListArchivedDeterministicMints();
+    bool WriteZerocoinSpendSerialEntry(const CZerocoinSpend& zerocoinSpend);
+    bool EraseZerocoinSpendSerialEntry(const CBigNum& serialEntry);
+    bool ReadZerocoinSpendSerialEntry(const CBigNum& bnSerial);
+    bool WriteCurrentSeedHash(const uint256& hashSeed);
+    bool ReadCurrentSeedHash(uint256& hashSeed);
+    bool WriteZKPSeed(const uint256& hashSeed, const std::vector<uint8_t>& seed);
+    bool ReadZKPSeed(const uint256& hashSeed, std::vector<uint8_t>& seed);
+    bool EraseZKPSeed();
+ 
+    bool WriteZKPCount(const uint32_t& nCount);
+    bool ReadZKPCount(uint32_t& nCount);
+
+  
 private:
     CWalletDB(const CWalletDB &);
     void operator=(const CWalletDB &);

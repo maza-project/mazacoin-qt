@@ -7,7 +7,6 @@
 #include "primitives/zerocoin.h"
 #include "libzerocoin/CoinSpend.h"
 #include "libzerocoin/PublicCoin.h"
-//#include "main.h"
 #include "txdb.h"
 #include "util.h"
 
