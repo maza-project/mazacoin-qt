@@ -11,7 +11,7 @@
 #define BITCOIN_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/bitcoin-config.h"
+#include "config/maza-config.h"
 #endif
 
 #include "compat.h"
@@ -51,8 +51,8 @@ extern bool fLogIPs;
 extern std::atomic<bool> fReopenDebugLog;
 extern CTranslationInterface translationInterface;
 
-extern const char *const BITCOIN_CONF_FILENAME;
-extern const char *const BITCOIN_PID_FILENAME;
+extern const char *const MAZA_CONF_FILENAME;
+extern const char *const MAZA_PID_FILENAME;
 
 /**
  * Translation function: Call Translate signal on UI interface, which returns a
@@ -214,7 +214,7 @@ void RenameThread(const char *name);
  * .. and a wrapper that just calls func once
  */
 template <typename Callable> void TraceThread(const char *name, Callable func) {
-    std::string s = strprintf("bitcoin-%s", name);
+    std::string s = strprintf("maza-%s", name);
     RenameThread(s.c_str());
     try {
         LogPrintf("%s thread start\n", name);

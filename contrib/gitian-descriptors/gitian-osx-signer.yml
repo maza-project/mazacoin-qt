@@ -1,5 +1,5 @@
 ---
-name: "bitcoin-dmg-signer"
+name: "maza-dmg-signer"
 suites:
 - "trusty"
 architectures:
@@ -7,7 +7,7 @@ architectures:
 packages:
 - "faketime"
 remotes:
-- "url": "https://github.com/bitcoin-core/bitcoin-detached-sigs.git"
+- "url": "https://github.com/maza/maza-detached-sigs.git"
   "dir": "signature"
 files:
 - "bitcoin-osx-unsigned.tar.gz"

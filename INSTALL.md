@@ -1,5 +1,5 @@
-Building Bitcoin
+Building Maza
 ================
 
 See doc/build-*.md for instructions on building the various
-elements of the Bitcoin ABC implementation of Bitcoin.
+elements of the Maza implementation.

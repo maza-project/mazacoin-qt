@@ -187,7 +187,7 @@ static UniValue getrawtransaction(const Config &config,
             "         \"type\" : \"pubkeyhash\",  (string) The type, eg "
             "'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"address\"        (string) bitcoin address\n"
+            "           \"address\"        (string) maza address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -439,7 +439,7 @@ static UniValue createrawtransaction(const Config &config,
             "with outputs\n"
             "    {\n"
             "      \"address\": x.xxx,    (numeric or string, required) The "
-            "key is the bitcoin address, the numeric value (can be string) is "
+            "key is the maza address, the numeric value (can be string) is "
             "the " +
             CURRENCY_UNIT +
             " amount\n"
@@ -544,7 +544,7 @@ static UniValue createrawtransaction(const Config &config,
             CBitcoinAddress address(name_);
             if (!address.IsValid()) {
                 throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY,
-                                   std::string("Invalid Bitcoin address: ") +
+                                   std::string("Invalid Maza address: ") +
                                        name_);
             }
 
@@ -614,7 +614,7 @@ static UniValue decoderawtransaction(const Config &config,
             "'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
             "           \"12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc\"   (string) "
-            "bitcoin address\n"
+            "maza address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -658,7 +658,7 @@ static UniValue decodescript(const Config &config,
             "  \"type\":\"type\", (string) The output type\n"
             "  \"reqSigs\": n,    (numeric) The required signatures\n"
             "  \"addresses\": [   (json array of string)\n"
-            "     \"address\"     (string) bitcoin address\n"
+            "     \"address\"     (string) maza address\n"
             "     ,...\n"
             "  ],\n"
             "  \"p2sh\",\"address\" (string) address of P2SH script wrapping "
@@ -983,21 +983,21 @@ static UniValue signrawtransaction(const Config &config,
     int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
     if (request.params.size() > 3 && !request.params[3].isNull()) {
         static std::map<std::string, int> mapSigHashValues = {
-            {"ALL", SIGHASH_ALL},
-            {"ALL|ANYONECANPAY", SIGHASH_ALL | SIGHASH_ANYONECANPAY},
-            {"ALL|FORKID", SIGHASH_ALL | SIGHASH_FORKID},
-            {"ALL|FORKID|ANYONECANPAY",
-             SIGHASH_ALL | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
-            {"NONE", SIGHASH_NONE},
-            {"NONE|ANYONECANPAY", SIGHASH_NONE | SIGHASH_ANYONECANPAY},
-            {"NONE|FORKID", SIGHASH_NONE | SIGHASH_FORKID},
-            {"NONE|FORKID|ANYONECANPAY",
-             SIGHASH_NONE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
-            {"SINGLE", SIGHASH_SINGLE},
-            {"SINGLE|ANYONECANPAY", SIGHASH_SINGLE | SIGHASH_ANYONECANPAY},
-            {"SINGLE|FORKID", SIGHASH_SINGLE | SIGHASH_FORKID},
-            {"SINGLE|FORKID|ANYONECANPAY",
-             SIGHASH_SINGLE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
+                        {"ALL", SIGHASH_ALL},
+                        {"ALL|ANYONECANPAY", SIGHASH_ALL | SIGHASH_ANYONECANPAY},
+                        {"ALL|FORKID", SIGHASH_ALL | SIGHASH_FORKID},
+                        {"ALL|FORKID|ANYONECANPAY",
+                         SIGHASH_ALL | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
+                        {"NONE", SIGHASH_NONE},
+                        {"NONE|ANYONECANPAY", SIGHASH_NONE | SIGHASH_ANYONECANPAY},
+                        {"NONE|FORKID", SIGHASH_NONE | SIGHASH_FORKID},
+                        {"NONE|FORKID|ANYONECANPAY",
+                         SIGHASH_NONE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
+                        {"SINGLE", SIGHASH_SINGLE},
+                        {"SINGLE|ANYONECANPAY", SIGHASH_SINGLE | SIGHASH_ANYONECANPAY},
+                        {"SINGLE|FORKID", SIGHASH_SINGLE | SIGHASH_FORKID},
+                        {"SINGLE|FORKID|ANYONECANPAY",
+                         SIGHASH_SINGLE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY},
         };
         std::string strHashType = request.params[3].get_str();
         if (!mapSigHashValues.count(strHashType)) {
@@ -1009,7 +1009,7 @@ static UniValue signrawtransaction(const Config &config,
             throw JSONRPCError(RPC_INVALID_PARAMETER,
                                "Signature must use SIGHASH_FORKID");
         }
-    }
+     }
 
     bool fHashSingle =
         ((nHashType & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID)) ==
@@ -1055,7 +1055,7 @@ static UniValue signrawtransaction(const Config &config,
 
         ScriptError serror = SCRIPT_ERR_OK;
         if (!VerifyScript(
-                txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS,
+                txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID,
                 TransactionSignatureChecker(&txConst, i, amount), &serror)) {
             TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
         }

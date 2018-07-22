@@ -50,7 +50,7 @@
 #include <boost/thread.hpp>
 
 #if defined(NDEBUG)
-#error "Bitcoin cannot be compiled without assertions."
+#error "Maza cannot be compiled without assertions."
 #endif
 
 /**
@@ -90,7 +90,7 @@ static void CheckBlockIndex(const Consensus::Params &consensusParams);
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
 
-const std::string strMessageMagic = "Bitcoin Signed Message:\n";
+const std::string strMessageMagic = "Maza Signed Message:\n";
 
 // Internal stuff
 namespace {
@@ -874,6 +874,11 @@ static bool AcceptToMemoryPoolWorker(
                 GetArg("-promiscuousmempoolflags", scriptVerifyFlags);
         }
 
+        const bool hasUAHF = IsUAHFenabledForCurrentBlock(config);
+        if (hasUAHF) {
+            scriptVerifyFlags |= SCRIPT_ENABLE_SIGHASH_FORKID;
+        }
+
         // Check against previous transactions. This is done last to help
         // prevent CPU exhaustion denial-of-service attacks.
         PrecomputedTransactionData txdata(tx);
@@ -892,9 +897,20 @@ static bool AcceptToMemoryPoolWorker(
         // There is a similar check in CreateNewBlock() to prevent creating
         // invalid blocks, however allowing such transactions into the mempool
         // can be exploited as a DoS attack.
+        //
+        // SCRIPT_ENABLE_SIGHASH_FORKID is also added as to ensure we do not
+        // filter out transactions using the antireplay feature.
         {
-            if (!CheckInputs(tx, state, view, true,
-                             MANDATORY_SCRIPT_VERIFY_FLAGS, true, txdata)) {
+            // Depending on the UAHF activation, we require SIGHASH_FORKID or
+            // not.
+            // TODO: Cleanup after the Hard Fork.
+            uint32_t mandatoryFlags = MANDATORY_SCRIPT_VERIFY_FLAGS;
+            if (hasUAHF) {
+                mandatoryFlags |= SCRIPT_ENABLE_SIGHASH_FORKID;
+            }
+
+            if (!CheckInputs(tx, state, view, true, mandatoryFlags, true,
+                             txdata)) {
                 return error(
                     "%s: BUG! PLEASE REPORT THIS! ConnectInputs failed "
                     "against MANDATORY but not STANDARD flags %s, %s",
@@ -1087,14 +1103,27 @@ bool ReadBlockFromDisk(CBlock &block, const CBlockIndex *pindex,
 }
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams) {
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
-    // Force block reward to zero when right shift is undefined.
-    if (halvings >= 64) return 0;
+    const CAmount nMinSubsidy = 1 * COIN;
+    CAmount nSubsidy = 5000 * COIN;
+    int halvings;
 
-    CAmount nSubsidy = 50 * COIN;
     // Subsidy is cut in half every 210,000 blocks which will occur
     // approximately every 4 years.
+    if (consensusParams.fPowAllowMinDifficultyBlocks) {
+        halvings = (nHeight-10) / consensusParams.nSubsidyHalvingInterval;
+        if (nHeight >= 10)
+            nSubsidy = nSubsidy / 5;
+    } else {
+        halvings = (nHeight-100000) / consensusParams.nSubsidyHalvingInterval;
+        if (nHeight >= 100000)
+            nSubsidy = nSubsidy / 5;
+    }
+
+    // Force block reward to Minimum when right shift is undefined.
+    if (halvings >= 64) return nMinSubsidy;
+    
     nSubsidy >>= halvings;
+    if (nSubsidy < nMinSubsidy) nSubsidy = nMinSubsidy;
     return nSubsidy;
 }
 
@@ -1400,11 +1429,20 @@ static bool CheckInputs(const CTransaction &tx, CValidationState &state,
                 // or non-null dummy arguments; if so, don't trigger DoS
                 // protection to avoid splitting the network between upgraded
                 // and non-upgraded nodes.
+                uint32_t mandatoryFlags =
+                    flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS;
                 CScriptCheck check2(scriptPubKey, amount, tx, i,
-                                    flags &
-                                        ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS,
+                                    mandatoryFlags &
+                                        ~SCRIPT_ENABLE_SIGHASH_FORKID,
                                     cacheStore, txdata);
-                if (check2()) {
+                // We also need to check with and without the forkid flag. Some
+                // node may not have caught up yet with the tip of the chain and
+                // may be relying transaction we do not consider valid.
+                CScriptCheck check3(scriptPubKey, amount, tx, i,
+                                    mandatoryFlags |
+                                        SCRIPT_ENABLE_SIGHASH_FORKID,
+                                    cacheStore, txdata);
+                if (check2() || check3()) {
                     return state.Invalid(
                         false, REJECT_NONSTANDARD,
                         strprintf("non-mandatory-script-verify-flag (%s)",
@@ -1652,7 +1690,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos,
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("bitcoin-scriptch");
+    RenameThread("maza-scriptch");
     scriptcheckqueue.Thread();
 }
 
@@ -1829,13 +1867,6 @@ static bool ConnectBlock(const Config &config, const CBlock &block,
     // further duplicate transactions descending from the known pairs either. If
     // we're on the known chain at height greater than where BIP34 activated, we
     // can save the db accesses needed for the BIP30 check.
-    CBlockIndex *pindexBIP34height =
-        pindex->pprev->GetAncestor(chainparams.GetConsensus().BIP34Height);
-    // Only continue to enforce if we're below BIP34 activation height or the
-    // block hash at that height doesn't correspond.
-    fEnforceBIP30 = fEnforceBIP30 && (!pindexBIP34height ||
-                                      !(pindexBIP34height->GetBlockHash() ==
-                                        chainparams.GetConsensus().BIP34Hash));
 
     if (fEnforceBIP30) {
         for (const auto &tx : block.vtx) {
@@ -1858,28 +1889,23 @@ static bool ConnectBlock(const Config &config, const CBlock &block,
         fStrictPayToScriptHash ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
 
     // Start enforcing the DERSIG (BIP66) rule
-    if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
+    //if (pindex->nHeight >= chainparams.GetConsensus().BIP66Height) {
         flags |= SCRIPT_VERIFY_DERSIG;
-    }
+    //}
 
-    // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule
-    if (pindex->nHeight >= chainparams.GetConsensus().BIP65Height) {
-        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
-    }
+    const bool hasUAHF = IsUAHFenabled(config, pindex->pprev);
 
-    // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY)
-    // using versionbits logic.
     int nLockTimeFlags = 0;
-    if (VersionBitsState(pindex->pprev, chainparams.GetConsensus(),
-                         Consensus::DEPLOYMENT_CSV,
-                         versionbitscache) == THRESHOLD_ACTIVE) {
+
+    if (hasUAHF) {
+        // Start enforcing CHECKLOCKTIMEVERIFY (BIP65) rule after HF
+        flags |= SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY;
+    
+        // Start enforcing BIP68 (sequence locks) and BIP112 (CHECKSEQUENCEVERIFY)
         flags |= SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
         nLockTimeFlags |= LOCKTIME_VERIFY_SEQUENCE;
-    }
-
-    // If the UAHF is enabled, we start accepting replay protected txns
-    const bool hasUAHF = IsUAHFenabled(config, pindex->pprev);
-    if (hasUAHF) {
+    
+        // If the UAHF is enabled, we start accepting replay protected txns
         flags |= SCRIPT_VERIFY_STRICTENC;
         flags |= SCRIPT_ENABLE_SIGHASH_FORKID;
     }
@@ -2062,6 +2088,12 @@ static bool ConnectBlock(const Config &config, const CBlock &block,
     LogPrint("bench", "    - Callbacks: %.2fms [%.2fs]\n",
              0.001 * (nTime6 - nTime5), nTimeCallbacks * 0.000001);
 
+    // If this block activates UAHF, we clear the mempool. This ensure that
+    // we'll only get replay protected transaction in the mempool going forward.
+    if (!hasUAHF && IsUAHFenabled(config, pindex)) {
+        mempool.clear();
+    }
+    
     return true;
 }
 
@@ -2343,6 +2375,16 @@ static bool DisconnectTip(const Config &config, CValidationState &state,
         return false;
     }
 
+    // If this block was the activation of the UAHF, then we need to remove
+    // transactions that are valid only on the HF chain. There is no easy way to
+    // do this so we'll just discard the whole mempool and then add the
+    // transaction of the block we just disconnected back.
+    if (IsUAHFenabled(config, pindexDelete) &&
+        !IsUAHFenabled(config, pindexDelete->pprev)) {
+        mempool.clear();
+    }
+
+
     if (!fBare) {
         // Resurrect mempool transactions from the disconnected block.
         std::vector<uint256> vHashUpdate;
@@ -2365,6 +2407,30 @@ static bool DisconnectTip(const Config &config, CValidationState &state,
         // this block that were added back and cleans up the mempool state.
         mempool.UpdateTransactionsFromBlock(vHashUpdate);
     }
+
+    if (IsUAHFenabled(config, pindexDelete)) {
+        // If UAHF is enabled for the curent block, but not for the previous
+        // block, we must check that the block is larger than 1MB.
+        if (!IsUAHFenabled(config, pindexDelete->pprev)) {
+            const uint64_t currentBlockSize =
+                ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION);
+            if (currentBlockSize <= LEGACY_MAX_BLOCK_SIZE) {
+                return state.DoS(100, false, REJECT_INVALID,
+                                 "bad-blk-too-small", false,
+                                 "size limits failed");
+            }
+        }
+    } else {
+        // When UAHF is not enabled, block cannot be bigger than
+        // LEGACY_MAX_BLOCK_SIZE .
+        const uint64_t currentBlockSize =
+            ::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION);
+        if (currentBlockSize > LEGACY_MAX_BLOCK_SIZE) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-blk-length",
+                             false, "size limits failed");
+        }
+    }
+
 
     // Update chainActive and related variables.
     UpdateTip(config, pindexDelete->pprev);
@@ -3251,10 +3317,9 @@ bool ContextualCheckBlockHeader(const CBlockHeader &block,
 
     // Reject outdated version blocks when 95% (75% on testnet) of the network
     // has upgraded:
-    // check for version 2, 3 and 4 upgrades
+    // check for version 2, 3 upgrades
     if ((block.nVersion < 2 && nHeight >= consensusParams.BIP34Height) ||
-        (block.nVersion < 3 && nHeight >= consensusParams.BIP66Height) ||
-        (block.nVersion < 4 && nHeight >= consensusParams.BIP65Height)) {
+        (block.nVersion < 3 && nHeight >= consensusParams.BIP66Height)) {
         return state.Invalid(
             false, REJECT_OBSOLETE,
             strprintf("bad-version(0x%08x)", block.nVersion),
@@ -3274,17 +3339,6 @@ bool ContextualCheckTransaction(const Config &config, const CTransaction &tx,
         // ensure continuity with other clients.
         return state.DoS(10, false, REJECT_INVALID, "bad-txns-nonfinal", false,
                          "non-final transaction");
-    }
-
-    if (IsUAHFenabled(config, nMedianTimePast) &&
-        nHeight <= consensusParams.antiReplayOpReturnSunsetHeight) {
-        for (const CTxOut &o : tx.vout) {
-            if (o.scriptPubKey.IsCommitment(
-                    consensusParams.antiReplayOpReturnCommitment)) {
-                return state.DoS(10, false, REJECT_INVALID, "bad-txn-replay",
-                                 false, "non playable transaction");
-            }
-        }
     }
 
     return true;
@@ -3331,12 +3385,8 @@ bool ContextualCheckBlock(const Config &config, const CBlock &block,
                           const CBlockIndex *pindexPrev) {
     const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
 
-    // Start enforcing BIP113 (Median Time Past) using versionbits logic.
-    int nLockTimeFlags = 0;
-    if (VersionBitsState(pindexPrev, consensusParams, Consensus::DEPLOYMENT_CSV,
-                         versionbitscache) == THRESHOLD_ACTIVE) {
-        nLockTimeFlags |= LOCKTIME_MEDIAN_TIME_PAST;
-    }
+    // Start enforcing BIP113 (Median Time Past) upon Hard fork
+    int nLockTimeFlags = (IsUAHFenabledForCurrentBlock(config)) ? LOCKTIME_MEDIAN_TIME_PAST : 0;
 
     const int64_t nMedianTimePast =
         pindexPrev == nullptr ? 0 : pindexPrev->GetMedianTimePast();
@@ -3361,9 +3411,9 @@ bool ContextualCheckBlock(const Config &config, const CBlock &block,
         if (block.vtx[0]->vin[0].scriptSig.size() < expect.size() ||
             !std::equal(expect.begin(), expect.end(),
                         block.vtx[0]->vin[0].scriptSig.begin())) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false,
-                             "block height mismatch in coinbase");
-        }
+                return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false,
+                                 "block height mismatch in coinbase");
+            }
     }
 
     return true;

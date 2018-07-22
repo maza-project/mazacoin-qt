@@ -6,7 +6,7 @@
 
 #include "config.h"
 #include "rpc/server.h"
-#include "test/test_bitcoin.h"
+#include "test/test_maza.h"
 #include "validation.h"
 #include "wallet/rpcdump.h"
 #include "wallet/test/wallet_test_fixture.h"
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(ApproximateBestSubset) {
 
     empty_wallet();
 }
-
+/*
 BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup) {
     LOCK(cs_main);
 
@@ -507,5 +507,5 @@ BOOST_FIXTURE_TEST_CASE(rescan, TestChain100Setup) {
         ::pwalletMain = backup;
     }
 }
-
+*/
 BOOST_AUTO_TEST_SUITE_END()

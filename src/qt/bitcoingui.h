@@ -6,7 +6,7 @@
 #define BITCOIN_QT_BITCOINGUI_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/bitcoin-config.h"
+#include "config/maza-config.h"
 #endif
 
 #include "amount.h"
@@ -40,7 +40,7 @@ class QProgressDialog;
 QT_END_NAMESPACE
 
 /**
- * Bitcoin GUI main class. This class represents the main window of the Bitcoin
+ * Maza GUI main class. This class represents the main window of the Maza
  * UI. It communicates with both the client and wallet models to give the user
  * an up-to-date view of the current core state.
  */
