@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "consensus/validation.h"
 #include "libzerocoin/Denominations.h"
 #include <list>
 #include <string>
@@ -15,7 +16,6 @@ struct CMintMeta;
 class CTransaction;
 class CTxIn;
 class CTxOut;
-class CValidationState;
 class CZerocoinMint;
 class uint256;
 

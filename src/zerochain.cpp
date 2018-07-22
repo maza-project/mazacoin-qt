@@ -4,9 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "zerochain.h"
+#include "primitives/zerocoin.h"
 #include "libzerocoin/CoinSpend.h"
 #include "libzerocoin/PublicCoin.h"
-#include "main.h"
+//#include "main.h"
 #include "txdb.h"
 #include "util.h"
 
@@ -17,10 +18,10 @@
 
 bool BlockToMintValueVector(const CBlock& block, const libzerocoin::CoinDenomination denom,
                             std::vector<CBigNum>& vValues) {
-  for (const CTransaction tx : block.vtx) {
-    if (!tx.IsZerocoinMint()) continue;
+  for (auto tx : block.vtx) {
+    if (!tx->IsZerocoinMint()) continue;
 
-    for (const CTxOut txOut : tx.vout) {
+    for (auto txOut : tx->vout) {
       if (!txOut.scriptPubKey.IsZerocoinMint()) continue;
 
       CValidationState state;
@@ -37,12 +38,12 @@ bool BlockToMintValueVector(const CBlock& block, const libzerocoin::CoinDenomina
 }
 
 bool BlockToPubcoinList(const CBlock& block, std::list<libzerocoin::PublicCoin>& listPubcoins) {
-  for (const CTransaction tx : block.vtx) {
-    if (!tx.IsZerocoinMint()) continue;
+  for (const auto& tx : block.vtx) {
+    if (!tx->IsZerocoinMint()) continue;
 
     // uint256 txHash = tx.GetHash();
-    for (unsigned int i = 0; i < tx.vout.size(); i++) {
-      const CTxOut txOut = tx.vout[i];
+    for (unsigned int i = 0; i < tx->vout.size(); i++) {
+      const CTxOut txOut = tx->vout[i];
       if (!txOut.scriptPubKey.IsZerocoinMint()) continue;
 
       CValidationState state;
@@ -58,12 +59,12 @@ bool BlockToPubcoinList(const CBlock& block, std::list<libzerocoin::PublicCoin>&
 
 // return a list of zerocoin mints contained in a specific block
 bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMints) {
-  for (const CTransaction& tx : block.vtx) {
-    if (!tx.IsZerocoinMint()) continue;
+  for (const auto& tx : block.vtx) {
+    if (!tx->IsZerocoinMint()) continue;
 
     // uint256 txHash = tx.GetHash();
-    for (unsigned int i = 0; i < tx.vout.size(); i++) {
-      const CTxOut txOut = tx.vout[i];
+    for (unsigned int i = 0; i < tx->vout.size(); i++) {
+      const CTxOut txOut = tx->vout[i];
       if (!txOut.scriptPubKey.IsZerocoinMint()) continue;
 
       CValidationState state;
@@ -73,7 +74,7 @@ bool BlockToZerocoinMintList(const CBlock& block, std::list<CZerocoinMint>& vMin
       // version should not actually matter here since it is just a reference to the pubcoin, not to the privcoin
       uint8_t version = 1;
       CZerocoinMint mint = CZerocoinMint(pubCoin.getDenomination(), pubCoin.getValue(), 0, 0, false, version, nullptr);
-      mint.SetTxHash(tx.GetHash());
+      mint.SetTxHash(tx->GetHash());
       vMints.push_back(mint);
     }
   }
@@ -152,7 +153,7 @@ void FindMints(std::vector<CMintMeta> vMintsToFind, std::vector<CMintMeta>& vMin
     meta.txid = txHash;
     meta.nHeight = mapBlockIndex[hashBlock]->nHeight;
     meta.isUsed = fSpent;
-    LogPrint(ClubLog::ZERO, "%s: found updates for pubcoinhash = %s\n", __func__, meta.hashPubcoin.GetHex());
+    LogPrintf("%s: found updates for pubcoinhash = %s\n", __func__, meta.hashPubcoin.GetHex());
 
     vMintsToUpdate.push_back(meta);
   }
@@ -201,7 +202,7 @@ std::string ReindexZerocoinDB() {
 
   CBlockIndex* pindex = chainActive[Params().Zerocoin_StartHeight()];
   while (pindex) {
-    if (pindex->nHeight % 1000 == 0) LogPrint(ClubLog::ZERO, "Reindexing zerocoin : block %d...\n", pindex->nHeight);
+    if (pindex->nHeight % 1000 == 0) LogPrintf("Reindexing zerocoin : block %d...\n", pindex->nHeight);
 
     CBlock block;
     if (!ReadBlockFromDisk(block, pindex)) { return _("Reindexing zerocoin failed"); }
@@ -264,7 +265,7 @@ bool TxOutToPublicCoin(const CTxOut& txout, libzerocoin::PublicCoin& pubCoin, CV
   publicZerocoin.setvch(vchZeroMint);
 
   libzerocoin::CoinDenomination denomination = libzerocoin::AmountToZerocoinDenomination(txout.nValue);
-  LogPrint(ClubLog::ZERO, "%s ZCPRINT denomination %d pubcoin %s\n", __func__, denomination, publicZerocoin.GetHex());
+  LogPrintf("%s ZCPRINT denomination %d pubcoin %s\n", __func__, denomination, publicZerocoin.GetHex());
   if (denomination == libzerocoin::ZQ_ERROR)
     return state.DoS(100, error("TxOutToPublicCoin : txout.nValue is not correct"));
 

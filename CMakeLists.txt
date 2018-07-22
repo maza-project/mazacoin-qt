@@ -116,9 +116,6 @@ SET(UTIL_A
 	./src/threadinterrupt.cpp
 	)
 
-
-
-
 SET(SERVER_A
 	./src/amount.cpp
 	./src/addrman.cpp
@@ -137,7 +134,7 @@ SET(SERVER_A
 	./src/miner.cpp
 	./src/net.cpp
 	./src/net_processing.cpp
-    ./src/rpc/abc.cpp
+  ./src/rpc/abc.cpp
 	./src/rpc/blockchain.cpp
 	./src/rpc/client.cpp
 	./src/rpc/mining.cpp
@@ -148,8 +145,8 @@ SET(SERVER_A
 	./src/rpc/server.cpp
     
 	./src/noui.cpp
-    ./src/policy/fees.cpp
-    ./src/policy/policy.cpp
+  ./src/policy/fees.cpp
+  ./src/policy/policy.cpp
 	./src/pow.cpp
 	./src/rest.cpp
     
@@ -166,10 +163,9 @@ SET(SERVER_A
 	./src/dbwrapper.cpp
 	./src/netaddress.cpp
 	./src/protocol.cpp
-#	./src/rpc/net.cpp
-#	./src/rpcclient.cpp
 	./src/wallet/rpcdump.cpp
 	./src/wallet/rpcwallet.cpp
+#	./src/zerochain.cpp
 	)
 
 
@@ -224,6 +220,7 @@ SET(SOURCES
 	./src/wallet/crypter.cpp
 	./src/wallet/db.cpp
 	./src/wallet/walletdb.cpp
+##	./src/zerotracker.cpp
 	)
 
 SET(ZMQ_SOURCES

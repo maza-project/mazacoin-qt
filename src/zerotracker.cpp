@@ -5,7 +5,6 @@
 
 #include "zerotracker.h"
 #include "accumulators.h"
-#include "main.h"
 #include "sync.h"
 #include "txdb.h"
 #include "util.h"
