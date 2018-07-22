@@ -165,7 +165,7 @@ SET(SERVER_A
 	./src/protocol.cpp
 	./src/wallet/rpcdump.cpp
 	./src/wallet/rpcwallet.cpp
-#	./src/zerochain.cpp
+##	./src/zerochain.cpp
 	)
 
 
@@ -220,7 +220,7 @@ SET(SOURCES
 	./src/wallet/crypter.cpp
 	./src/wallet/db.cpp
 	./src/wallet/walletdb.cpp
-##	./src/zerotracker.cpp
+#	./src/zerotracker.cpp
 	)
 
 SET(ZMQ_SOURCES

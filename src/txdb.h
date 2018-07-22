@@ -9,6 +9,9 @@
 #include "chain.h"
 #include "coins.h"
 #include "dbwrapper.h"
+#include "bignum.h"
+#include "libzerocoin/PublicCoin.h"
+//#include "libzerocoin/CoinSpend.h"
 
 #include <map>
 #include <string>
@@ -128,5 +131,33 @@ public:
     bool LoadBlockIndexGuts(
         std::function<CBlockIndex *(const uint256 &)> insertBlockIndex);
 };
+
+/** Access to the Zerocoin database (blocks/index/) */
+class CZerocoinDB : public CDBWrapper {
+public:
+    CZerocoinDB(size_t nCacheSize, bool fMemory = false, bool fWipe = false);
+
+private:
+    CZerocoinDB(const CZerocoinDB &);
+    void operator=(const CZerocoinDB &);
+
+public:
+  bool WriteCoinMintBatch(const std::vector<std::pair<libzerocoin::PublicCoin, uint256> >& mintInfo);
+  //  bool WriteCoinSpendBatch(const std::vector<std::pair<libzerocoin::CoinSpend, uint256> >& spendInfo);
+  bool WriteCoinMint(const libzerocoin::PublicCoin& pubCoin, const uint256& txHash);
+  bool ReadCoinMint(const CBigNum& bnPubcoin, uint256& txHash);
+  bool ReadCoinMint(const uint256& hashPubcoin, uint256& hashTx);
+  bool WriteCoinSpend(const CBigNum& bnSerial, const uint256& txHash);
+  bool ReadCoinSpend(const CBigNum& bnSerial, uint256& txHash);
+  bool ReadCoinSpend(const uint256& hashSerial, uint256& txHash);
+  bool EraseCoinMint(const CBigNum& bnPubcoin);
+  bool EraseCoinSpend(const CBigNum& bnSerial);
+  bool WipeCoins(std::string strType);
+  bool WriteAccumulatorValue(const uint32_t& nChecksum, const CBigNum& bnValue);
+  bool ReadAccumulatorValue(const uint32_t& nChecksum, CBigNum& bnValue);
+  bool EraseAccumulatorValue(const uint32_t& nChecksum);
+};
+
+extern CZerocoinDB* zerocoinDB;
 
 #endif // BITCOIN_TXDB_H
