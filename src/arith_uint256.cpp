@@ -7,6 +7,7 @@
 
 #include "crypto/common.h"
 #include "uint256.h"
+#include "uint512.h"
 #include "utilstrencodings.h"
 
 #include <cstdio>
@@ -136,7 +137,8 @@ template <unsigned int BITS> std::string base_uint<BITS>::GetHex() const {
 }
 
 template <unsigned int BITS> void base_uint<BITS>::SetHex(const char *psz) {
-    *this = UintToArith256(uint256S(psz));
+  std::string s(psz);
+  SetHex(s);
 }
 
 template <unsigned int BITS>
@@ -231,4 +233,16 @@ arith_uint256 UintToArith256(const uint256 &a) {
     for (int x = 0; x < b.WIDTH; ++x)
         b.pn[x] = ReadLE32(a.begin() + x * 4);
     return b;
+}
+
+uint512 ArithToUint512(const arith_uint512& a) {
+  uint512 b;
+  for (int x = 0; x < a.WIDTH; ++x) WriteLE32(b.begin() + x * 4, a.pn[x]);
+  return b;
+}
+
+arith_uint512 UintToArith512(const uint512& a) {
+  arith_uint512 b;
+  for (int x = 0; x < b.WIDTH; ++x) b.pn[x] = ReadLE32(a.begin() + x * 4);
+  return b;
 }

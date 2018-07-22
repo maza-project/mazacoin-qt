@@ -14,6 +14,7 @@
 #include <vector>
 
 class uint256;
+class uint512;
 
 class uint_error : public std::runtime_error {
 public:
@@ -251,6 +252,12 @@ public:
 
     unsigned int size() const { return sizeof(pn); }
 
+    // Useful for Hash functions
+    uint8_t* begin() { return (uint8_t*)&pn[0]; }
+    uint8_t* end() { return (uint8_t*)&pn[WIDTH]; }
+    const uint8_t* begin() const { return (uint8_t*)&pn[0]; }
+    const uint8_t* end() const { return (uint8_t*)&pn[WIDTH]; }
+
     /**
      * Returns the position of the highest bit set plus one, or zero if the
      * value is zero.
@@ -297,7 +304,26 @@ public:
     friend arith_uint256 UintToArith256(const uint256 &);
 };
 
+
+
+/** 512-bit unsigned big integer. */
+class arith_uint512 : public base_uint<512> {
+ public:
+  arith_uint512() {}
+  arith_uint512(const base_uint<512>& b) : base_uint<512>(b) {}
+  arith_uint512(uint64_t b) : base_uint<512>(b) {}
+  explicit arith_uint512(const std::string& str) : base_uint<512>(str) {}
+  //explicit arith_uint512(const std::vector<uint8_t>& vch) : base_uint<512>(vch) {}
+
+  friend arith_uint512 UintToArith512(const uint512& a);
+  friend uint512 ArithToUint512(const arith_uint512& a);
+};
+
+
 uint256 ArithToUint256(const arith_uint256 &);
 arith_uint256 UintToArith256(const uint256 &);
+uint512 ArithToUint512(const arith_uint512 &);
+arith_uint512 UintToArith512(const uint512 &);
+
 
 #endif // BITCOIN_ARITH_UINT256_H

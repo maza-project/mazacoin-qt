@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include "libzerocoin/Denominations.h"
+#include "libzerocoin/SpendType.h"
 #include "prevector.h"
 
 static const uint64_t MAX_SIZE = 0x02000000;
@@ -236,6 +238,33 @@ template <typename Stream> inline void Unserialize(Stream &s, bool &a) {
     char f = ser_readdata8(s);
     a = f;
 }
+
+// Serializatin for libzerocoin::CoinDenomination
+inline unsigned int GetSerializeSize(libzerocoin::CoinDenomination a) { return sizeof(libzerocoin::CoinDenomination); }
+template <typename Stream> inline void Serialize(Stream& s, libzerocoin::CoinDenomination a) {
+  int f = libzerocoin::ZerocoinDenominationToInt(a);
+  s.write((char*)&(f), sizeof(f));
+}
+
+template <typename Stream> inline void Unserialize(Stream& s, libzerocoin::CoinDenomination& a) {
+  int f = 0;
+  s.read((char*)&(f), sizeof(f));
+  a = libzerocoin::IntToZerocoinDenomination(f);
+}
+
+// Serialization for libzerocoin::SpendType
+inline unsigned int GetSerializedSize(libzerocoin::SpendType a) { return sizeof(libzerocoin::SpendType); }
+template <typename Stream> inline void Serialize(Stream& s, libzerocoin::SpendType a) {
+  uint8_t f = static_cast<uint8_t>(a);
+  s.write((char*)&(f), sizeof(f));
+}
+
+template <typename Stream> inline void Unserialize(Stream& s, libzerocoin::SpendType& a) {
+  uint8_t f = 0;
+  s.read((char*)&(f), sizeof(f));
+  a = static_cast<libzerocoin::SpendType>(f);
+}
+
 
 /**
  * Compact Size

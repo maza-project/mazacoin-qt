@@ -19,6 +19,7 @@
 #include "PrivateCoin.h"
 #include "SerialNumberSignatureOfKnowledge.h"
 #include "ZerocoinParams.h"
+#include "SpendType.h"
 #include "bignum.h"
 #include "pubkey.h"
 #include "serialize.h"

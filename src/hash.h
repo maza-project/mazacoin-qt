@@ -141,6 +141,7 @@ private:
     const int nVersion;
 
 public:
+    CHashWriter() : nType(SER_DISK), nVersion(0) {}
     CHashWriter(int nTypeIn, int nVersionIn)
         : nType(nTypeIn), nVersion(nVersionIn) {}
 
