@@ -3,7 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "config.h"
+#include "validation.h"
+#include "txmempool.h"
 #include "zerotracker.h"
+#include "chainparams.h"
 #include "accumulators.h"
 #include "sync.h"
 #include "txdb.h"
@@ -13,7 +17,8 @@
 
 using namespace std;
 
-CZeroTracker::CZeroTracker() {
+CZeroTracker::CZeroTracker(std::string strFile) {
+  strWalletFile = strFile;
   mapSerialHashes.clear();
   mapPendingSpends.clear();
   fInitialized = false;
@@ -48,7 +53,7 @@ bool CZeroTracker::Archive(CMintMeta& meta) {
       return error("%s: failed to archive deterministic ophaned mint", __func__);
   }
 
-  LogPrint(ClubLog::ZERO, "%s: archived pubcoinhash %s\n", __func__, meta.hashPubcoin.GetHex());
+  LogPrintf("%s: archived pubcoinhash %s\n", __func__, meta.hashPubcoin.GetHex());
   return true;
 }
 
@@ -66,7 +71,7 @@ bool CZeroTracker::UnArchive(const uint256& hashPubcoin, bool isDeterministic) {
     Add(mint, false);
   }
 
-  LogPrint(ClubLog::ZERO, "%s: unarchived %s\n", __func__, hashPubcoin.GetHex());
+  LogPrintf("%s: unarchived %s\n", __func__, hashPubcoin.GetHex());
   return true;
 }
 
@@ -316,7 +321,7 @@ bool CZeroTracker::UpdateStatusInternal(const std::set<uint256>& setMempool, CMi
     if (!setMempool.count(txidPendingSpend) || isConfirmedSpend) {
       RemovePending(txidPendingSpend);
       isPendingSpend = false;
-      LogPrint(ClubLog::ZERO, "%s : Pending txid %s removed because not in mempool\n", __func__,
+      LogPrintf("%s : Pending txid %s removed because not in mempool\n", __func__,
                txidPendingSpend.GetHex());
     }
   }
@@ -324,7 +329,7 @@ bool CZeroTracker::UpdateStatusInternal(const std::set<uint256>& setMempool, CMi
   bool isUsed = isPendingSpend || isConfirmedSpend;
 
   if (!mint.nHeight || !isMintInChain || isUsed != mint.isUsed) {
-    CTransaction tx;
+    CTransactionRef tx;
     uint256 hashBlock;
 
     // Txid will be marked 0 if there is no knowledge of the final tx hash yet
@@ -341,7 +346,8 @@ bool CZeroTracker::UpdateStatusInternal(const std::set<uint256>& setMempool, CMi
     if (setMempool.count(mint.txid)) return true;
 
     // Check the transaction associated with this mint
-    if (!IsInitialBlockDownload() && !GetTransaction(mint.txid, tx, hashBlock, true)) {
+    auto &config = const_cast<Config &>(GetConfig());
+    if (!IsInitialBlockDownload() && !GetTransaction(config, mint.txid, tx, hashBlock, true)) {
       LogPrintf("%s : Failed to find tx for mint txid=%s\n", __func__, mint.txid.GetHex());
       mint.isArchived = true;
       Archive(mint);
@@ -353,7 +359,7 @@ bool CZeroTracker::UpdateStatusInternal(const std::set<uint256>& setMempool, CMi
       LogPrintf("%s : Found orphaned mint txid=%s\n", __func__, mint.txid.GetHex());
       mint.isUsed = false;
       mint.nHeight = 0;
-      if (tx.IsCoinStake()) {
+      if (tx->IsCoinStake()) {
         mint.isArchived = true;
         Archive(mint);
       }
@@ -363,7 +369,7 @@ bool CZeroTracker::UpdateStatusInternal(const std::set<uint256>& setMempool, CMi
 
     // Check that the mint has correct used status
     if (mint.isUsed != isUsed) {
-      LogPrint(ClubLog::ZERO, "%s : Set mint %s isUsed to %d\n", __func__, mint.hashPubcoin.GetHex(), isUsed);
+      LogPrintf("%s : Set mint %s isUsed to %d\n", __func__, mint.hashPubcoin.GetHex(), isUsed);
       mint.isUsed = isUsed;
       return true;
     }
@@ -377,20 +383,21 @@ std::set<CMintMeta> CZeroTracker::ListMints(bool fUnusedOnly, bool fMatureOnly, 
   if (fUpdateStatus) {
     std::list<CZerocoinMint> listMintsDB = walletdb.ListMintedCoins();
     for (auto& mint : listMintsDB) Add(mint);
-    LogPrint(ClubLog::ZERO, "%s: added %d zerocoinmints from DB\n", __func__, listMintsDB.size());
+    LogPrintf("%s: added %d zerocoinmints from DB\n", __func__, listMintsDB.size());
 
     std::list<CDeterministicMint> listDeterministicDB = walletdb.ListDeterministicMints();
     for (auto& dMint : listDeterministicDB) Add(dMint);
-    LogPrint(ClubLog::ZERO, "%s: added %d dzkp from DB\n", __func__, listDeterministicDB.size());
+    LogPrintf("%s: added %d dzkp from DB\n", __func__, listDeterministicDB.size());
   }
 
   std::vector<CMintMeta> vOverWrite;
   std::set<CMintMeta> setMints;
-  std::set<uint256> setMempool;
+  std::vector<uint256> setMem;
   {
     LOCK(mempool.cs);
-    mempool.getTransactions(setMempool);
+    mempool.queryHashes(setMem);
   }
+  std::set<uint256> setMempool(setMem.begin(),setMem.end());
 
   std::map<libzerocoin::CoinDenomination, int> mapMaturity = GetMintMaturityHeight();
   for (auto& it : mapSerialHashes) {
