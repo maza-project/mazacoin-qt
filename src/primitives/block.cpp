@@ -1,6 +1,8 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
+// Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2015-2017 The PIVX developers
+// Copyright (c) 2018 The ClubChain developers
+// Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "primitives/block.h"
@@ -25,4 +27,7 @@ std::string CBlock::ToString() const {
         s << "  " << vtx[i]->ToString() << "\n";
     }
     return s.str();
+}
+bool CBlock::IsZerocoinStake() const {
+    return IsProofOfStake() && vtx[1]->IsZerocoinSpend();
 }

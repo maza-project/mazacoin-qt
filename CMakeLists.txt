@@ -199,6 +199,9 @@ SET(SOURCES
 	./src/compat/glibc_sanity.cpp
 	./src/compat/glibcxx_sanity.cpp
 	./src/miner.cpp
+	./src/primitives/zerocoin.cpp
+	./src/primitives/deterministicmint.cpp
+	./src/primitives/block.cpp
 	./src/primitives/block.cpp
 	./src/primitives/transaction.cpp
 	./src/script/bitcoinconsensus.cpp
@@ -272,6 +275,7 @@ add_library(coin ${HEADERS} ${CRYPTO_HEADERS} ${PRIMITIVE_HEADERS} ${SOURCES} ${
 set_property(TARGET coin PROPERTY CXX_STANDARD 11)
 
 add_subdirectory(src)
+add_subdirectory(src/libzerocoin)
 
 set(SECP256 ./src/secp256k1/src/secp256k1.c)
 add_library(secp256k1 ${SECP256})

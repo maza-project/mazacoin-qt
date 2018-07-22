@@ -147,6 +147,14 @@ public:
 
     bool IsNull() const { return (nValue == -1); }
 
+    void SetEmpty() {
+      nValue = 0;
+      scriptPubKey.clear();
+    }
+
+    bool IsEmpty() const { return (nValue == 0 && scriptPubKey.empty()); }
+
+
     CAmount GetDustThreshold(const CFeeRate &minRelayTxFee) const {
         // "Dust" is defined in terms of CTransaction::minRelayTxFee, which has
         // units satoshis-per-kilobyte. If you'd pay more than 1/3 in fees to
@@ -169,6 +177,10 @@ public:
 
     bool IsDust(const CFeeRate &minRelayTxFee) const {
         return (nValue < GetDustThreshold(minRelayTxFee));
+    }
+
+    bool IsZerocoinMint() const {
+        return !scriptPubKey.empty() && scriptPubKey.IsZerocoinMint();
     }
 
     friend bool operator==(const CTxOut &a, const CTxOut &b) {
@@ -290,6 +302,29 @@ public:
     bool IsCoinBase() const {
         return (vin.size() == 1 && vin[0].prevout.IsNull());
     }
+
+    bool IsCoinStake() const;
+
+    bool IsZerocoinSpend() const {
+        return (vin.size() > 0 && (vin[0].prevout.hash).IsNull() &&
+                vin[0].scriptSig[0] == OP_ZEROCOINSPEND);
+    }
+
+    bool IsZerocoinMint() const {
+        for (const CTxOut &txout : vout) {
+            if (txout.scriptPubKey.IsZerocoinMint()) return true;
+        }
+        return false;
+    }
+
+    bool ContainsZerocoins() const {
+        bool yeah = IsZerocoinSpend() || IsZerocoinMint();
+        return yeah;
+    }
+
+    CAmount GetZerocoinMinted() const;
+    CAmount GetZerocoinSpent() const;
+    int GetZerocoinMintCount() const;
 
     friend bool operator==(const CTransaction &a, const CTransaction &b) {
         return a.hash == b.hash;

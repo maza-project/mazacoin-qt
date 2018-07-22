@@ -1,5 +1,7 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2009-2014 The Bitcoin developers
+// Copyright (c) 2015-2018 The PIVX developers
+// Copyright (c) 2018 The ClubChain developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -31,7 +33,11 @@ std::string CTxIn::ToString() const {
     str += "CTxIn(";
     str += prevout.ToString();
     if (prevout.IsNull())
-        str += strprintf(", coinbase %s", HexStr(scriptSig));
+        if (scriptSig.IsZerocoinSpend())
+            str += strprintf(", zerocoinspend %s...",
+                             HexStr(scriptSig).substr(0, 25));
+        else
+            str += strprintf(", coinbase %s", HexStr(scriptSig));
     else
         str += strprintf(", scriptSig=%s", HexStr(scriptSig).substr(0, 24));
     if (nSequence != SEQUENCE_FINAL)
@@ -82,6 +88,18 @@ CTransaction::CTransaction(CMutableTransaction &&tx)
     : nVersion(tx.nVersion), vin(std::move(tx.vin)), vout(std::move(tx.vout)),
       nLockTime(tx.nLockTime), hash(ComputeHash()) {}
 
+
+bool CTransaction::IsCoinStake() const {
+  if (vin.empty()) return false;
+
+  // ppcoin: the coin stake transaction is marked with the first output empty
+  bool fAllowNull = vin[0].scriptSig.IsZerocoinSpend();
+  if (vin[0].prevout.IsNull() && !fAllowNull) return false;
+
+  return (vin.size() > 0 && vout.size() >= 2 && vout[0].IsEmpty());
+}
+
+
 CAmount CTransaction::GetValueOut() const {
     CAmount nValueOut = 0;
     for (std::vector<CTxOut>::const_iterator it(vout.begin()); it != vout.end();
@@ -100,6 +118,36 @@ double CTransaction::ComputePriority(double dPriorityInputs,
     if (nTxSize == 0) return 0.0;
 
     return dPriorityInputs / nTxSize;
+}
+
+CAmount CTransaction::GetZerocoinMinted() const {
+    for (const CTxOut txOut : vout) {
+        if (!txOut.scriptPubKey.IsZerocoinMint()) continue;
+
+        return txOut.nValue;
+    }
+
+    return CAmount(0);
+}
+CAmount CTransaction::GetZerocoinSpent() const {
+    if (!IsZerocoinSpend()) return 0;
+
+    CAmount nValueOut = 0;
+    for (const CTxIn txin : vin) {
+        if (!txin.scriptSig.IsZerocoinSpend()) continue;
+
+        nValueOut += txin.nSequence * COIN;
+    }
+
+    return nValueOut;
+}
+
+int CTransaction::GetZerocoinMintCount() const {
+    int nCount = 0;
+    for (const CTxOut out : vout) {
+        if (out.scriptPubKey.IsZerocoinMint()) nCount++;
+    }
+    return nCount;
 }
 
 unsigned int CTransaction::CalculateModifiedSize(unsigned int nTxSize) const {
