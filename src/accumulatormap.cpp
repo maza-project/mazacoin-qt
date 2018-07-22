@@ -6,7 +6,6 @@
 #include "accumulatormap.h"
 #include "accumulators.h"
 #include "libzerocoin/Denominations.h"
-#include "main.h"
 #include "txdb.h"
 
 using namespace libzerocoin;

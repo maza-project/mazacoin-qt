@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "chain.h"
+#warning "limited zerocoin/pos stuff in chain.h file header so far"  
 
 /**
  * CChain implementation

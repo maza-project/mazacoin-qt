@@ -14,6 +14,8 @@
 #include "primitives/zerocoin.h"
 #include "uint256.h"
 
+static const int ACC_BLOCK_INTERVAL = 10;
+
 class CBlockIndex;
 
 std::map<libzerocoin::CoinDenomination, int> GetMintMaturityHeight();

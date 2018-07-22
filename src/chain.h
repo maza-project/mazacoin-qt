@@ -208,6 +208,12 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    uint256 nAccumulatorCheckpoint;
+  
+    //! zerocoin specific fields
+    std::map<libzerocoin::CoinDenomination, int64_t> mapZerocoinSupply;
+    std::vector<libzerocoin::CoinDenomination> vMintDenominationsInBlock;
+
 
     //! (memory only) Sequential id assigned to distinguish order in which
     //! blocks are received.
@@ -236,6 +242,12 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+
+        nAccumulatorCheckpoint.SetNull();
+        // Start supply of each denomination with 0s
+        for (auto& denom : libzerocoin::zerocoinDenomList) { mapZerocoinSupply.insert(std::make_pair(denom, 0)); }
+        vMintDenominationsInBlock.clear();
+
     }
 
     CBlockIndex() { SetNull(); }
@@ -248,6 +260,7 @@ public:
         nTime = block.nTime;
         nBits = block.nBits;
         nNonce = block.nNonce;
+        nAccumulatorCheckpoint = block.nAccumulatorCheckpoint;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -276,6 +289,7 @@ public:
         block.nTime = nTime;
         block.nBits = nBits;
         block.nNonce = nNonce;
+        block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
         return block;
     }
 
@@ -284,6 +298,19 @@ public:
     int64_t GetBlockTime() const { return (int64_t)nTime; }
 
     int64_t GetBlockTimeMax() const { return (int64_t)nTimeMax; }
+
+    int64_t GetZerocoinSupply() const {
+      int64_t nTotal = 0;
+      for (auto& denom : libzerocoin::zerocoinDenomList) {
+        nTotal += libzerocoin::ZerocoinDenominationToAmount(denom) * mapZerocoinSupply.at(denom);
+      }
+      return nTotal;
+    }
+
+    bool MintedDenomination(libzerocoin::CoinDenomination denom) const {
+      return std::find(vMintDenominationsInBlock.begin(), vMintDenominationsInBlock.end(), denom) !=
+        vMintDenominationsInBlock.end();
+    }
 
     enum { nMedianTimeSpan = 11 };
 

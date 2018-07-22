@@ -6,12 +6,12 @@
 #include "accumulators.h"
 #include "accumulatorcheckpoints.h"
 #include "accumulatormap.h"
+#include "validation.h"
 #include "chainparams.h"
 #include "init.h"
-#include "main.h"
-#include "main_constants.h"
-#include "spork.h"
 #include "txdb.h"
+#include "config.h"
+#include "zerochain.h"
 
 using namespace libzerocoin;
 using namespace std;
@@ -23,14 +23,14 @@ uint32_t ParseChecksum(uint256 nChecksum, CoinDenomination denomination) {
   // shift to the beginning bit of this denomination and trim any remaining bits by returning 32 bits only
   int pos = distance(zerocoinDenomList.begin(), find(zerocoinDenomList.begin(), zerocoinDenomList.end(), denomination));
   nChecksum = ArithToUint256(UintToArith256(nChecksum) >> (32 * ((zerocoinDenomList.size() - 1) - pos)));
-  return nChecksum.GetLow32();
+  return nChecksum.GetUint32();
 }
 
 uint32_t GetChecksum(const CBigNum& bnValue) {
-  CDataStream ss(SER_GETHASH);
+  CDataStream ss(SER_GETHASH, 0);
   ss << bnValue;
   uint256 hash = Hash(ss.begin(), ss.end());
-  return hash.GetLow32();
+  return hash.GetUint32();
 }
 
 // Find the first occurance of a certain accumulator checksum. Return 0 if not found.
@@ -118,7 +118,7 @@ bool LoadAccumulatorValuesFromDB(const uint256 nCheckpoint) {
     if (!zerocoinDB->ReadAccumulatorValue(nChecksum, bnValue)) {
       if (!count(listAccCheckpointsNoDB.begin(), listAccCheckpointsNoDB.end(), nCheckpoint))
         listAccCheckpointsNoDB.push_back(nCheckpoint);
-      LogPrint(ClubLog::ZERO, "%s : Missing databased value for checksum %d", __func__, nChecksum);
+      LogPrintf("%s : Missing databased value for checksum %d", __func__, nChecksum);
       return false;
     }
     mapAccumulatorValues.insert(make_pair(nChecksum, bnValue));
@@ -225,14 +225,14 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
 
     // grab mints from this block
     CBlock block;
-    if (!ReadBlockFromDisk(block, pindex)) return error("%s: failed to read block from disk", __func__);
+    if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus())) return error("%s: failed to read block from disk", __func__);
 
     std::list<PublicCoin> listPubcoins;
     if (!BlockToPubcoinList(block, listPubcoins))
       return error("%s: failed to get zerocoin mintlist from block %d", __func__, pindex->nHeight);
 
     nTotalMintsFound += listPubcoins.size();
-    LogPrint(ClubLog::ZERO, "%s found %d mints\n", __func__, listPubcoins.size());
+    LogPrintf("%s found %d mints\n", __func__, listPubcoins.size());
 
     // add the pubcoins to accumulator
     for (const PublicCoin pubcoin : listPubcoins) {
@@ -248,7 +248,7 @@ bool CalculateAccumulatorCheckpoint(int nHeight, uint256& nCheckpoint, Accumulat
   else
     nCheckpoint = mapAccumulators.GetCheckpoint();
 
-  LogPrint(ClubLog::ZERO, "%s checkpoint=%s\n", __func__, nCheckpoint.GetHex());
+  LogPrintf("%s checkpoint=%s\n", __func__, nCheckpoint.GetHex());
   return true;
 }
 
@@ -256,7 +256,10 @@ bool ValidateAccumulatorCheckpoint(const CBlock& block, CBlockIndex* pindex, Acc
   // V1 accumulators are completely phased out by the time this code hits the public and begins generating new
   // checkpoints It is VERY IMPORTANT that when this is being run and height < v2_start, then ZKP need to be disabled
   // at the same time!!
-  if (pindex->nHeight < Params().Zerocoin_StartHeight() || fVerifyingBlocks) return true;
+
+  // was XXXX if (pindex->nHeight < Params().Zerocoin_StartHeight() || fVerifyingBlocks) return true;
+  
+  if (pindex->nHeight < Params().Zerocoin_StartHeight()) return true;
 
   if (pindex->nHeight % ACC_BLOCK_INTERVAL == 0) {
     uint256 nCheckpointCalculated;
@@ -296,7 +299,7 @@ void RandomizeSecurityLevel(int& nSecurityLevel) {
 
 // Compute how many coins were added to an accumulator up to the end height
 int ComputeAccumulatedCoins(int nHeightEnd, libzerocoin::CoinDenomination denom) {
-  CBlockIndex* pindex = chainActive[GetZerocoinStartHeight()];
+  CBlockIndex* pindex = chainActive[Params().Zerocoin_StartHeight()];
   int n = 0;
   while (pindex->nHeight < nHeightEnd) {
     n += count(pindex->vMintDenominationsInBlock.begin(), pindex->vMintDenominationsInBlock.end(), denom);
@@ -313,7 +316,7 @@ int AddBlockMintsToAccumulator(const libzerocoin::PublicCoin& coin, const int nH
   if (pindex->MintedDenomination(coin.getDenomination())) {
     // grab mints from this block
     CBlock block;
-    if (!ReadBlockFromDisk(block, pindex))
+    if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus()))
       return error("%s: failed to read block from disk while adding pubcoins to witness", __func__);
 
     list<PublicCoin> listPubcoins;
@@ -361,7 +364,7 @@ bool GetAccumulatorValue(int& nHeight, const libzerocoin::CoinDenomination denom
 
 bool GenerateAccumulatorWitness(const PublicCoin& coin, Accumulator& accumulator, AccumulatorWitness& witness,
                                 int nSecurityLevel, int& nMintsAdded, string& strError, CBlockIndex* pindexCheckpoint) {
-  LogPrint(ClubLog::ZERO, "%s: generating\n", __func__);
+  LogPrintf("%s: generating\n", __func__);
   int nLockAttempts = 0;
   while (nLockAttempts < 100) {
     TRY_LOCK(cs_main, lockMain);
@@ -373,13 +376,14 @@ bool GenerateAccumulatorWitness(const PublicCoin& coin, Accumulator& accumulator
     break;
   }
   if (nLockAttempts == 100) return error("%s: could not get lock on cs_main", __func__);
-  LogPrint(ClubLog::ZERO, "%s: after lock\n", __func__);
+  LogPrintf("%s: after lock\n", __func__);
   uint256 txid;
   if (!zerocoinDB->ReadCoinMint(coin.getValue(), txid)) return error("%s failed to read mint from db", __func__);
 
-  CTransaction txMinted;
+  CTransactionRef txMinted;
   uint256 hashBlock;
-  if (!GetTransaction(txid, txMinted, hashBlock)) return error("%s failed to read tx", __func__);
+  auto &config = const_cast<Config &>(GetConfig());
+  if (!GetTransaction(config, txid, txMinted, hashBlock)) return error("%s failed to read tx", __func__);
 
   int nHeightTest;
   if (!IsTransactionInChain(txid, nHeightTest)) return error("%s: mint tx %s is not in chain", __func__, txid.GetHex());
@@ -445,7 +449,7 @@ bool GenerateAccumulatorWitness(const PublicCoin& coin, Accumulator& accumulator
 
   // calculate how many mints of this denomination existed in the accumulator we initialized
   nMintsAdded += ComputeAccumulatedCoins(nAccStartHeight, coin.getDenomination());
-  LogPrint(ClubLog::ZERO, "%s : %d mints added to witness\n", __func__, nMintsAdded);
+  LogPrintf("%s : %d mints added to witness\n", __func__, nMintsAdded);
 
   return true;
 }
