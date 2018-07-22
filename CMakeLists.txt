@@ -87,6 +87,8 @@ SET(COMMON_A
 	./src/accumulators.cpp
 	./src/accumulatormap.cpp
 	./src/accumulatorcheckpoints.cpp
+  ./src/mainzero.cpp
+  ./src/denomination_functions.cpp
 	./src/protocol.cpp
 	./src/pubkey.cpp
 	./src/netbase.cpp
