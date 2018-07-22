@@ -19,7 +19,7 @@ if(CMAKE_CXX_FLAGS_RELWITHDEBINFO MATCHES DNDEBUG)
   string(REPLACE "-DNDEBUG" "" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE}")
 endif()
 
-project(mazacoin-qt)
+project(maza_pos)
 
 set(OPENSSL_VER "1.0.2n")
 set(BDB_VER "4.8.30")

@@ -89,6 +89,8 @@ static bool SignStep(const BaseSignatureCreator &creator,
         case TX_NONSTANDARD:
         case TX_NULL_DATA:
             return false;
+        case TX_ZEROCOINMINT:
+            return false;
         case TX_PUBKEY:
             keyID = CPubKey(vSolutions[0]).GetID();
             return Sign1(keyID, creator, scriptPubKey, ret);
@@ -296,7 +298,7 @@ struct Stacks {
         return result;
     }
 };
-}
+} // namespace
 
 static Stacks CombineSignatures(const CScript &scriptPubKey,
                                 const BaseSignatureChecker &checker,
@@ -306,6 +308,7 @@ static Stacks CombineSignatures(const CScript &scriptPubKey,
     switch (txType) {
         case TX_NONSTANDARD:
         case TX_NULL_DATA:
+        case TX_ZEROCOINMINT:
             // Don't know anything about this, assume bigger one is correct:
             if (sigs1.script.size() >= sigs2.script.size()) {
                 return sigs1;
@@ -377,7 +380,7 @@ public:
     }
 };
 const DummySignatureChecker dummyChecker;
-}
+} // namespace
 
 const BaseSignatureChecker &DummySignatureCreator::Checker() const {
     return dummyChecker;

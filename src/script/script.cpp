@@ -248,14 +248,20 @@ const char *GetOpName(opcodetype opcode) {
         case OP_NOP10:
             return "OP_NOP10";
 
+            // zerocoin
+        case OP_ZEROCOINMINT:
+            return "OP_ZEROCOINMINT";
+        case OP_ZEROCOINSPEND:
+            return "OP_ZEROCOINSPEND";
+
         case OP_INVALIDOPCODE:
             return "OP_INVALIDOPCODE";
 
-        // Note:
-        //  The template matching params OP_SMALLINTEGER/etc are defined in
-        //  opcodetype enum as kind of implementation hack, they are *NOT* real
-        //  opcodes. If found in real Script, just let the default: case deal
-        //  with them.
+            // Note:
+            //  The template matching params OP_SMALLINTEGER/etc are defined in
+            //  opcodetype enum as kind of implementation hack, they are *NOT*
+            //  real opcodes. If found in real Script, just let the default:
+            //  case deal with them.
 
         default:
             return "OP_UNKNOWN";
@@ -350,6 +356,19 @@ bool CScript::IsWitnessProgram(int &version,
         return true;
     }
     return false;
+}
+
+
+bool CScript::IsZerocoinMint() const
+{
+    //fast test for Zerocoin Mint CScripts
+    return (this->size() > 0 && (*this)[0] == OP_ZEROCOINMINT);
+}
+
+bool CScript::IsZerocoinSpend() const
+{
+  if (this->empty()) return false;
+  return ((*this)[0] == OP_ZEROCOINSPEND);
 }
 
 bool CScript::IsPushOnly(const_iterator pc) const {

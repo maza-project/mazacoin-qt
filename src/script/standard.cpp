@@ -32,6 +32,8 @@ const char *GetTxnOutputType(txnouttype t) {
             return "multisig";
         case TX_NULL_DATA:
             return "nulldata";
+        case TX_ZEROCOINMINT:
+            return "zerocoinmint";
     }
     return nullptr;
 }
@@ -73,6 +75,17 @@ bool Solver(const CScript &scriptPubKey, txnouttype &typeRet,
         vSolutionsRet.push_back(hashBytes);
         return true;
     }
+
+
+    // Zerocoin
+    if (scriptPubKey.IsZerocoinMint()){
+      typeRet = TX_ZEROCOINMINT;
+      if(scriptPubKey.size() > 150) return false;
+      std::vector<unsigned char> hashBytes(scriptPubKey.begin()+2, scriptPubKey.end());
+      vSolutionsRet.push_back(hashBytes);
+      return true;
+    }
+    
 
     // Provably prunable, data-carrying output
     //
@@ -232,7 +245,7 @@ public:
         return true;
     }
 };
-}
+} // namespace
 
 CScript GetScriptForDestination(const CTxDestination &dest) {
     CScript script;
