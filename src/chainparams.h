@@ -87,6 +87,23 @@ public:
     const CCheckpointData &Checkpoints() const { return checkpointData; }
     const ChainTxData &TxData() const { return chainTxData; }
 
+
+     /** Zerocoin **/
+  int Zerocoin_MaxSpendsPerTransaction() const;// { return nMaxZerocoinSpendsPerTransaction; }
+  CAmount Zerocoin_MintFee() const; // { return nMinZerocoinMintFee; }
+  int Zerocoin_MintRequiredConfirmations() const;// { return nMintRequiredConfirmations; }
+  int Zerocoin_RequiredAccumulation() const;// { return nRequiredAccumulation; }
+  int Zerocoin_DefaultSpendSecurity() const;// { return nDefaultSecurityLevel; }
+  int Zerocoin_HeaderVersion() const;// { return nZerocoinHeaderVersion; }
+
+    /** Height or Time Based Activations **/
+  int Zerocoin_StartHeight() const;// { return nZerocoinStartHeight; }
+  //int LAST_POW_BLOCK() const { return nLastPOWBlock; }
+
+  //    int StakeMinAge() const { return nStakeMinAge; }
+  //    int ModifierInterval() const { return nModifierInterval; }
+  // int StakeTargetSpacing() const { return nStakeTargetSpacing; }
+  
 protected:
     CChainParams() {}
 

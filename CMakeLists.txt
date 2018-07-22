@@ -165,7 +165,7 @@ SET(SERVER_A
 	./src/protocol.cpp
 	./src/wallet/rpcdump.cpp
 	./src/wallet/rpcwallet.cpp
-##	./src/zerochain.cpp
+	./src/zerochain.cpp
 	)
 
 

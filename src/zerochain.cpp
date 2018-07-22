@@ -3,6 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "config.h"
+#include "chainparams.h"
+#include "validation.h"
 #include "zerochain.h"
 #include "primitives/zerocoin.h"
 #include "libzerocoin/CoinSpend.h"
@@ -93,9 +96,14 @@ void FindMints(std::vector<CMintMeta> vMintsToFind, std::vector<CMintMeta>& vMin
     }
 
     // make sure the txhash and block height meta data are correct for this mint
-    CTransaction tx;
+    CTransactionRef tx;
     uint256 hashBlock;
-    if (!GetTransaction(txHash, tx, hashBlock, true)) {
+
+    // bool GetTransaction(const Config &config, const uint256 &txid,  CTransactionRef &txOut, uint256 &hashBlock,
+    // bool fAllowSlow) {
+    auto &config = const_cast<Config &>(GetConfig());
+    
+    if (!GetTransaction(config, txHash, tx, hashBlock, true)) {
       LogPrintf("%s : cannot find tx %s\n", __func__, txHash.GetHex());
       vMissingMints.push_back(meta);
       continue;
@@ -112,9 +120,9 @@ void FindMints(std::vector<CMintMeta> vMintsToFind, std::vector<CMintMeta>& vMin
     bool fSpent = zerocoinDB->ReadCoinSpend(meta.hashSerial, hashTxSpend);
 
     // if marked as spent, check that it actually made it into the chain
-    CTransaction txSpend;
+    CTransactionRef txSpend;
     uint256 hashBlockSpend;
-    if (fSpent && !GetTransaction(hashTxSpend, txSpend, hashBlockSpend, true)) {
+    if (fSpent && !GetTransaction(config, hashTxSpend, txSpend, hashBlockSpend, true)) {
       LogPrintf("%s : cannot find spend tx %s\n", __func__, hashTxSpend.GetHex());
       meta.isUsed = false;
       vMintsToUpdate.push_back(meta);
@@ -133,7 +141,7 @@ void FindMints(std::vector<CMintMeta> vMintsToFind, std::vector<CMintMeta>& vMin
     }
 
     // is the denomination correct?
-    for (auto& out : tx.vout) {
+    for (auto& out : tx->vout) {
       if (!out.IsZerocoinMint()) continue;
       libzerocoin::PublicCoin pubcoin;
       CValidationState state;
@@ -204,17 +212,17 @@ std::string ReindexZerocoinDB() {
     if (pindex->nHeight % 1000 == 0) LogPrintf("Reindexing zerocoin : block %d...\n", pindex->nHeight);
 
     CBlock block;
-    if (!ReadBlockFromDisk(block, pindex)) { return _("Reindexing zerocoin failed"); }
+    if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus())) { return _("Reindexing zerocoin failed"); }
 
-    for (const CTransaction& tx : block.vtx) {
-      for (unsigned int i = 0; i < tx.vin.size(); i++) {
-        if (tx.IsCoinBase()) break;
+    for (const auto& tx : block.vtx) {
+      for (unsigned int i = 0; i < tx->vin.size(); i++) {
+        if (tx->IsCoinBase()) break;
 
-        if (tx.ContainsZerocoins()) {
-          uint256 txid = tx.GetHash();
+        if (tx->ContainsZerocoins()) {
+          uint256 txid = tx->GetHash();
           // Record Serials
-          if (tx.IsZerocoinSpend()) {
-            for (auto& in : tx.vin) {
+          if (tx->IsZerocoinSpend()) {
+            for (auto& in : tx->vin) {
               if (!in.scriptSig.IsZerocoinSpend()) continue;
 
               libzerocoin::CoinSpend spend = TxInToZerocoinSpend(in);
@@ -223,8 +231,8 @@ std::string ReindexZerocoinDB() {
           }
 
           // Record mints
-          if (tx.IsZerocoinMint()) {
-            for (auto& out : tx.vout) {
+          if (tx->IsZerocoinMint()) {
+            for (auto& out : tx->vout) {
               if (!out.IsZerocoinMint()) continue;
 
               CValidationState state;
@@ -277,10 +285,10 @@ bool TxOutToPublicCoin(const CTxOut& txout, libzerocoin::PublicCoin& pubCoin, CV
 // return a list of zerocoin spends contained in a specific block, list may have many denominations
 std::list<libzerocoin::CoinDenomination> ZerocoinSpendListFromBlock(const CBlock& block) {
   std::list<libzerocoin::CoinDenomination> vSpends;
-  for (const CTransaction tx : block.vtx) {
-    if (!tx.IsZerocoinSpend()) continue;
+  for (const auto& tx : block.vtx) {
+    if (!tx->IsZerocoinSpend()) continue;
 
-    for (const CTxIn txin : tx.vin) {
+    for (const CTxIn txin : tx->vin) {
       if (!txin.scriptSig.IsZerocoinSpend()) continue;
 
       libzerocoin::CoinDenomination c = libzerocoin::IntToZerocoinDenomination(txin.nSequence);

@@ -328,6 +328,13 @@ CAmount GetBlockSubsidy(int nHeight, const Consensus::Params &consensusParams);
  * 1.0=current tip). */
 double GuessVerificationProgress(const ChainTxData &data, CBlockIndex *pindex);
 
+
+bool IsTransactionInChain(const uint256& txId, int& nHeightTx, CTransaction& tx);
+bool IsTransactionInChain(const uint256& txId, int& nHeightTx);
+
+
+
+
 /**
  * Prune block and undo files (blk???.dat and undo???.dat) so that the disk
  * space used is less than a user-defined target. The user sets the target (in
